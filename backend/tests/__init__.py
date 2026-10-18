@@ -1,0 +1,3 @@
+"""
+EcoTwin AI — Backend Tests
+"""

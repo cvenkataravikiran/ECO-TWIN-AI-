@@ -1,0 +1,139 @@
+{
+  "rules": [
+    {
+      "id": "rule-001-led",
+      "name": "LED lighting from billed electricity",
+      "category": "home-energy",
+      "knowledge_article_id": "kb-001",
+      "recommendation_id": "rec-001",
+      "trigger": "monthly_electricity_kwh provided and > 0",
+      "requires": ["hours and wattage assumptions stated; tariff ₹/kWh from user"]
+    },
+    {
+      "id": "rule-002-standby",
+      "name": "Standby awareness",
+      "category": "home-energy",
+      "knowledge_article_id": "kb-002",
+      "recommendation_id": "rec-002",
+      "trigger": "monthly_electricity_kwh provided",
+      "requires": ["No precise ₹ saving without measurement"]
+    },
+    {
+      "id": "rule-003-food",
+      "name": "Food waste from grocery spend",
+      "category": "food-kitchen",
+      "knowledge_article_id": "kb-003",
+      "recommendation_id": "rec-003",
+      "trigger": "monthly_grocery_spend provided",
+      "requires": ["User waste fraction; default not presented as measured"]
+    },
+    {
+      "id": "rule-004-travel",
+      "name": "Modal comparison for car or two-wheeler km",
+      "category": "travel-transport",
+      "knowledge_article_id": "kb-004",
+      "recommendation_id": "rec-004",
+      "trigger": "monthly_travel_km and mode in personal vehicle",
+      "requires": ["User costs per mode"]
+    },
+    {
+      "id": "rule-005-water",
+      "name": "Water record present",
+      "category": "water-nature",
+      "knowledge_article_id": "kb-006",
+      "recommendation_id": "rec-005",
+      "trigger": "'reduce-water' in goals or no other recommendations apply",
+      "requires": ["₹/kL from user for money estimates"]
+    },
+    {
+      "id": "rule-006-water-meter",
+      "name": "Water meter and leak review",
+      "category": "water-nature",
+      "knowledge_article_id": "kb-010",
+      "recommendation_id": "rec-006",
+      "trigger": "measured monthly water quantity > 0",
+      "requires": ["Comparable complete-period meter readings", "Local tariff for cost comparisons"]
+    },
+    {
+      "id": "rule-007-water-fixture",
+      "name": "Measure water fixture flow",
+      "category": "water-nature",
+      "knowledge_article_id": "kb-010",
+      "recommendation_id": "rec-007",
+      "trigger": "measured monthly water quantity > 0",
+      "requires": ["Fixture flow and use duration"]
+    },
+    {
+      "id": "rule-008-waste-audit",
+      "name": "Waste stream measurement",
+      "category": "waste-circular",
+      "knowledge_article_id": "kb-011",
+      "recommendation_id": "rec-008",
+      "trigger": "measured monthly waste quantity > 0",
+      "requires": ["Scope, period, method, and waste stream"]
+    },
+    {
+      "id": "rule-009-local-sorting",
+      "name": "Local waste sorting instructions",
+      "category": "waste-circular",
+      "knowledge_article_id": "kb-012",
+      "recommendation_id": "rec-009",
+      "trigger": "measured monthly waste quantity > 0",
+      "requires": ["Current local authority instructions"]
+    },
+    {
+      "id": "rule-010-repair",
+      "name": "Repair versus replacement",
+      "category": "shopping-products",
+      "knowledge_article_id": "kb-013",
+      "recommendation_id": "rec-010",
+      "trigger": "monthly shopping spend > 0",
+      "requires": ["Item-specific repair quote and current replacement price"]
+    },
+    {
+      "id": "rule-011-purchase-planning",
+      "name": "Durable purchase planning",
+      "category": "shopping-products",
+      "knowledge_article_id": "kb-014",
+      "recommendation_id": "rec-011",
+      "trigger": "monthly shopping spend > 0",
+      "requires": ["Item-level product and warranty details"]
+    },
+    {
+      "id": "rule-012-travel-log",
+      "name": "Trip-level travel baseline",
+      "category": "travel-transport",
+      "knowledge_article_id": "kb-015",
+      "recommendation_id": "rec-012",
+      "trigger": "measured monthly travel distance > 0",
+      "requires": ["Trip distance, purpose, mode, and cost"]
+    },
+    {
+      "id": "rule-013-appliance-inventory",
+      "name": "Appliance-level electricity inventory",
+      "category": "home-energy",
+      "knowledge_article_id": "kb-016",
+      "recommendation_id": "rec-013",
+      "trigger": "monthly electricity use > 0",
+      "requires": ["Appliance wattage and operating hours"]
+    },
+    {
+      "id": "rule-014-food-inventory",
+      "name": "Food inventory and meal planning",
+      "category": "food-kitchen",
+      "knowledge_article_id": "kb-017",
+      "recommendation_id": "rec-014",
+      "trigger": "monthly grocery spend > 0",
+      "requires": ["A representative food disposal log"]
+    },
+    {
+      "id": "rule-015-business-review",
+      "name": "Business resource data quality review",
+      "category": "business-institutions",
+      "knowledge_article_id": "kb-018",
+      "recommendation_id": "rec-015",
+      "trigger": "business workspace has measured resource data",
+      "requires": ["Site, reporting period, measurement status, and data owner"]
+    }
+  ]
+}

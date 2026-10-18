@@ -1,0 +1,24 @@
+{
+  "id": "kb-005",
+  "title": "Repair before replace",
+  "category": "shopping-products",
+  "summary": "Extending the life of phones, fans, mixers, and furniture often avoids both cost and manufacturing impact. Compare repair quotes you actually receive with replacement prices you actually see.",
+  "content": "Use local repair shops, authorised service centres, or community repair events if they exist where you live. EcoTwin will not name unverified Hyderabad shops or claim a subsidy that has not been checked.\n\nWhen replacement may be reasonable: safety risk (electrical, gas), or a documented much higher BEE star rating where you have compared nameplates and your tariff. Even then, enter the quotes — do not use placeholder rupee amounts as if they were invoices.",
+  "audience": ["individual", "household", "business"],
+  "applicability_conditions": ["Owns durable goods"],
+  "implementation_steps": [
+    "Describe the fault",
+    "Get a written or messaged repair quote in ₹",
+    "Note replacement price including GST",
+    "Use Compare (repair vs replace) with those two numbers"
+  ],
+  "limitations": ["Spare parts and labour vary by city and brand"],
+  "source_title": "Bureau of Energy Efficiency (for labelled replacements only)",
+  "source_publisher": "Bureau of Energy Efficiency, Ministry of Power, Government of India",
+  "source_url": "https://beeindia.gov.in/",
+  "publication_date": "",
+  "last_verified_date": "2026-10-16",
+  "verification_status": "verified",
+  "related_recommendation_ids": ["rec-010"],
+  "tags": ["repair", "circular", "INR"]
+}

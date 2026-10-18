@@ -1,0 +1,24 @@
+{
+  "id": "kb-011",
+  "title": "Measure waste before selecting a reduction action",
+  "category": "waste-circular",
+  "summary": "A short, clearly scoped waste log can show which streams are being measured. Keep estimates separate from weighed quantities.",
+  "content": "Choose a representative period and define what is included (for example, household residual waste or one office floor). Weigh or count waste by stream where practical, and note the method, period, and location.\n\nKeep measured quantities separate from estimates. Do not compare different scopes or assume a percentage of waste is food, recyclable, or avoidable. Use the results to choose a small prevention or reuse action and repeat the same measurement method later.",
+  "audience": ["individual", "household", "business", "institution"],
+  "applicability_conditions": ["Has a waste quantity to review or wants to establish a baseline"],
+  "implementation_steps": [
+    "Choose the location and measurement period",
+    "Separate waste into locally relevant streams",
+    "Record the measured quantity and method",
+    "Pick one prevention action and repeat the measurement"
+  ],
+  "limitations": ["Waste composition depends on location and activity", "A short audit may not represent seasonal patterns", "No emissions or diversion rate is estimated"],
+  "source_title": "EcoTwin measurement method",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-18",
+  "last_verified_date": "2026-10-18",
+  "verification_status": "needs-review",
+  "related_recommendation_ids": ["rec-008"],
+  "tags": ["waste", "audit", "measurement"]
+}

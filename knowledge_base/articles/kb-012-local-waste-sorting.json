@@ -1,0 +1,24 @@
+{
+  "id": "kb-012",
+  "title": "Confirm local waste-sorting and collection rules",
+  "category": "waste-circular",
+  "summary": "Separate waste only in ways supported by current local collection instructions. Check authorised collection routes for batteries and electronic waste.",
+  "content": "Waste segregation requirements and accepted materials vary by Urban Local Body and collection provider. Check the current local authority instructions before changing sorting or hand-off practices.\n\nKeep batteries and electronic waste out of mixed household waste when a suitable authorised collection route is available. Verify the current route with the local authority, state pollution control board, or producer take-back programme; this guide does not endorse a particular shop or collection point.",
+  "audience": ["individual", "household", "business", "institution"],
+  "applicability_conditions": ["Generates waste and needs to decide how to separate or hand it off"],
+  "implementation_steps": [
+    "Find the current local authority segregation instructions",
+    "Check which dry materials the collection route accepts",
+    "Verify a current authorised channel for batteries and e-waste",
+    "Keep collection instructions with the workspace's waste log"
+  ],
+  "limitations": ["Local schedules and accepted materials can change", "No specific city collection schedule is asserted"],
+  "source_title": "Local authority instructions required",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-18",
+  "last_verified_date": "2026-10-18",
+  "verification_status": "needs-review",
+  "related_recommendation_ids": ["rec-009"],
+  "tags": ["waste", "segregation", "e-waste", "batteries"]
+}

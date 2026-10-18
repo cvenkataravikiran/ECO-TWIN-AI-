@@ -1,0 +1,27 @@
+{
+  "id": "kb-002",
+  "title": "Reading an Indian electricity bill and standby loads",
+  "category": "home-energy",
+  "summary": "Household estimates in EcoTwin start from your billed kWh and the energy charge you type in. Standby (idle) loads exist, but their size must be measured or left as a low-confidence estimate.",
+  "content": "Telangana households typically receive bills from TSSPDCL (greater Hyderabad and surrounding circles) or TGNPDCL. EcoTwin does not store a DISCOM tariff schedule because slabs and fixed charges change and vary by circle.\n\nRecord for each month: billed kWh, energy charge in ₹/kWh if shown, and total amount in rupees. Mark the record as measured when it comes from the bill.\n\nIdle electronics still draw some power. A plug-in meter is the honest way to quantify this. Without measurement, EcoTwin may offer a qualitative reminder only, not a precise rupee figure.\n\nGrid greenhouse-gas intensity for India is published by the Central Electricity Authority in its CDM CO2 Baseline Database. EcoTwin will not apply a guessed kg CO2e/kWh. Paste the Combined Margin you read from CEA (or leave emissions uncalculated).",
+  "audience": ["individual", "household", "business"],
+  "applicability_conditions": ["Has an electricity connection in India"],
+  "implementation_steps": [
+    "Photograph or keep the latest bill (do not upload bills to Eco-Scorer)",
+    "Enter kWh and rupee amount as a measured resource record",
+    "Type the energy charge ₹/kWh into Settings or Compare",
+    "Optional: measure standby devices with a plug meter before claiming savings"
+  ],
+  "limitations": [
+    "Fixed/demand charges are not always proportional to kWh saved",
+    "CEA factor was not copied because the database page was not publicly readable on 16 October 2026"
+  ],
+  "source_title": "CDM — CO2 Baseline Database (link only)",
+  "source_publisher": "Central Electricity Authority",
+  "source_url": "https://cea.nic.in/cdm-co2-baseline-database/?lang=en",
+  "publication_date": "",
+  "last_verified_date": "2026-10-16",
+  "verification_status": "unverified",
+  "related_recommendation_ids": ["rec-002"],
+  "tags": ["electricity", "TSSPDCL", "bill", "CEA", "standby"]
+}

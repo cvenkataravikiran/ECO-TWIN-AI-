@@ -1,0 +1,24 @@
+{
+  "id": "kb-017",
+  "title": "Use a food inventory to guide meal planning",
+  "category": "food-kitchen",
+  "summary": "Check food already available and its storage needs before shopping. Track discarded food separately before estimating costs or impact.",
+  "content": "Before planning meals or shopping, check the food already available and note items that need to be used soon. Store food according to its label and safe handling guidance. Keep a short log of food discarded, including the item and whether it was edible.\n\nA grocery bill does not reveal how much food is wasted. Do not apply an assumed waste percentage to spending or present an unmeasured reduction as a saving.",
+  "audience": ["individual", "household", "business", "institution"],
+  "applicability_conditions": ["Records grocery spending or wants to reduce avoidable food disposal"],
+  "implementation_steps": [
+    "Check pantry and refrigerator before shopping",
+    "Plan meals around items that need to be used soon",
+    "Record discarded food over a representative week",
+    "Separate edible food from unavoidable preparation waste"
+  ],
+  "limitations": ["Food safety and storage requirements depend on the item", "No food-waste fraction, cost saving, or emissions estimate is assumed"],
+  "source_title": "EcoTwin measurement method",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-18",
+  "last_verified_date": "2026-10-18",
+  "verification_status": "needs-review",
+  "related_recommendation_ids": ["rec-014"],
+  "tags": ["food", "inventory", "meal-planning"]
+}

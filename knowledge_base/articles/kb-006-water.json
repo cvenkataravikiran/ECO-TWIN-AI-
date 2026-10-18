@@ -1,0 +1,24 @@
+{
+  "id": "kb-006",
+  "title": "Household water use in litres and kilolitres",
+  "category": "water-nature",
+  "summary": "Log water in litres or kilolitres (1 kL = 1,000 L = 1 m³). Savings estimates need your meter consumption and the ₹/kL you pay. Fixture flow cannot be read from a photograph.",
+  "content": "Many Indian bills report kilolitres. EcoTwin uses L and kL. Enter the billed quantity as measured when it comes from the meter or bill.\n\nLeaks and running taps waste water; a dripping tap can be checked with a bucket and a clock. Low-flow fixtures help only if they actually reduce litres used. Do not use a European €/m³ tariff.\n\nHyderabad is supplied by a municipal utility (commonly referred to as HMWSSB in public discussion). EcoTwin does not hardcode HMWSSB slab rates. Paste your volumetric charge if you want a rupee estimate.\n\nHeating water for bathing also uses electricity or LPG. Without knowing the fuel and temperature rise, EcoTwin will not invent kWh saved.",
+  "audience": ["individual", "household", "business"],
+  "applicability_conditions": ["Has piped or tanker water with a known quantity"],
+  "implementation_steps": [
+    "Enter billed kL and rupees as a water resource record",
+    "Fix visible leaks",
+    "Time a bucket test if you want flow in L/min for Compare",
+    "Leave heating savings blank unless you know the fuel"
+  ],
+  "limitations": ["Tanker water and borewells may have no meter", "No official HMWSSB tariff is stored"],
+  "source_title": "User water bill / meter (primary)",
+  "source_publisher": "EcoTwin AI — method note",
+  "source_url": "",
+  "publication_date": "2026-10-16",
+  "last_verified_date": "2026-10-16",
+  "verification_status": "unverified",
+  "related_recommendation_ids": ["rec-005", "rec-006", "rec-007"],
+  "tags": ["water", "kL", "litres", "Hyderabad"]
+}

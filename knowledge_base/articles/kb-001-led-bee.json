@@ -1,0 +1,29 @@
+{
+  "id": "kb-001",
+  "title": "Efficient lighting and BEE appliance labels",
+  "category": "home-energy",
+  "summary": "Replacing inefficient lamps with LED lighting and checking Bureau of Energy Efficiency (BEE) star labels when you buy appliances is a practical first step for Indian households. Savings depend on your hours of use and the unit rate on your electricity bill.",
+  "content": "The Bureau of Energy Efficiency (BEE), Ministry of Power, runs India's Standards & Labelling programme so buyers can compare appliances. Lighting upgrades should be based on lumens (brightness) and hours of use, not on a claimed universal rupee saving.\n\nHow to use this in Hyderabad or elsewhere in India:\n1. Note wattage of lamps you still run many hours per day.\n2. Choose LED replacements with similar lumens and the correct cap (B22, E27, GU10).\n3. Enter your DISCOM energy charge (₹/kWh) from the bill — TSSPDCL or TGNPDCL in Telangana — into EcoTwin. The app will estimate kWh and rupee savings from those inputs only.\n4. When replacing a refrigerator, AC, or fan, compare the BEE star label on the nameplate or packaging. EcoTwin does not invent star-rating tables.\n\nDo not treat a photograph of a lamp as proof of wattage or efficacy.",
+  "audience": ["individual", "household", "business", "institution"],
+  "applicability_conditions": ["Pays an electricity bill", "Has lighting or labelled appliances"],
+  "implementation_steps": [
+    "List fittings used more than about two hours a day",
+    "Record current wattage from the lamp or fitting if printed",
+    "Buy LED lamps matching lumens and cap type",
+    "Enter your bill's ₹/kWh and estimated hours into Compare or Action Planner",
+    "If buying a major appliance, read the BEE star label rather than relying on appearance"
+  ],
+  "limitations": [
+    "Rupee savings cannot be computed without your tariff and hours of use",
+    "Older dimmers may not work with every LED",
+    "This article does not quote unofficial percentage savings as guaranteed results"
+  ],
+  "source_title": "Bureau of Energy Efficiency",
+  "source_publisher": "Bureau of Energy Efficiency, Ministry of Power, Government of India",
+  "source_url": "https://beeindia.gov.in/",
+  "publication_date": "",
+  "last_verified_date": "2026-10-16",
+  "verification_status": "verified",
+  "related_recommendation_ids": ["rec-001"],
+  "tags": ["LED", "lighting", "BEE", "electricity", "Hyderabad", "Telangana"]
+}

@@ -1,0 +1,101 @@
+.page { animation: fadeIn 0.25s ease; }
+.header { margin-bottom: var(--space-8); }
+.pageTitle { font-family: var(--font-serif); font-size: var(--text-3xl); font-weight: var(--font-regular); color: var(--color-text-primary); margin-bottom: var(--space-2); }
+.pageSubtitle { font-size: var(--text-base); color: var(--color-text-secondary); line-height: var(--leading-relaxed); max-width: 640px; }
+
+.summaryGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
+@media (max-width: 700px) { .summaryGrid { grid-template-columns: 1fr; } }
+.summaryCard { background: var(--color-bg-card); border: 1px solid var(--color-border-light); border-radius: var(--radius-xl); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
+.summaryIcon { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; }
+.summaryValue { font-size: var(--text-2xl); font-weight: var(--font-semibold); color: var(--color-text-primary); }
+.summaryLabel { font-size: var(--text-sm); color: var(--color-text-secondary); display: flex; align-items: center; gap: var(--space-2); }
+.estimateTag { font-size: var(--text-xs); background: var(--color-warning-soft); color: var(--color-warning); border-radius: var(--radius-sm); padding: 1px 6px; }
+
+.legend { display: flex; align-items: center; gap: var(--space-4); font-size: var(--text-sm); color: var(--color-text-secondary); margin-bottom: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--color-bg-secondary); border-radius: var(--radius-md); flex-wrap: wrap; }
+.legendTitle { font-weight: var(--font-medium); color: var(--color-text-primary); }
+.legendItem { display: flex; align-items: center; gap: var(--space-2); }
+.dot { width: 10px; height: 10px; border-radius: var(--radius-full); display: inline-block; }
+
+.filterRow { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; }
+.select { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-light); border-radius: var(--radius-md); font-size: var(--text-sm); font-family: var(--font-sans); background: var(--color-bg-card); color: var(--color-text-primary); }
+
+.notice { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--text-xs); color: var(--color-text-tertiary); padding: var(--space-3) var(--space-4); background: var(--color-warning-soft); border-radius: var(--radius-md); margin-bottom: var(--space-6); line-height: var(--leading-relaxed); }
+
+.empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: var(--space-16) var(--space-8); color: var(--color-text-tertiary); text-align: center; }
+
+.timeline { display: flex; flex-direction: column; gap: var(--space-4); }
+.entryCard { background: var(--color-bg-card); border: 1px solid var(--color-border-light); border-left: 4px solid var(--color-primary-500); border-radius: var(--radius-xl); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+.entryHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-4); flex-wrap: wrap; }
+.entryDate { font-size: var(--text-xs); color: var(--color-text-tertiary); margin-bottom: var(--space-1); }
+.entryTitle { font-weight: var(--font-semibold); color: var(--color-text-primary); font-size: var(--text-md); }
+.entryBadges { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+.statusBadge { font-size: var(--text-xs); padding: 2px 8px; border-radius: var(--radius-full); font-weight: var(--font-medium); }
+.status_completed { background: var(--color-success-soft); color: var(--color-success); }
+.status_in-progress { background: var(--color-warning-soft); color: var(--color-warning); }
+.status_planned { background: var(--color-info-soft); color: var(--color-info); }
+.status_suggested { background: var(--color-bg-tertiary); color: var(--color-text-tertiary); }
+.status_deferred { background: var(--color-bg-tertiary); color: var(--color-text-tertiary); }
+
+.sourceBadge { font-size: var(--text-xs); padding: 2px 8px; border-radius: var(--radius-sm); }
+.src_measured { background: var(--color-success-soft); color: var(--color-success); }
+.src_estimated { background: var(--color-warning-soft); color: var(--color-warning); }
+.src_not-reported { background: var(--color-warning-soft); color: var(--color-warning); }
+.src_user-reported { background: var(--color-info-soft); color: var(--color-info); }
+.src_imported { background: var(--color-info-soft); color: var(--color-info); }
+
+.comparison { display: grid; grid-template-columns: 1fr auto 1fr 1fr; gap: var(--space-4); align-items: center; padding: var(--space-4); background: var(--color-bg-secondary); border-radius: var(--radius-md); }
+.compCol { display: flex; flex-direction: column; gap: var(--space-1); }
+.compLabel { font-size: var(--text-xs); color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
+.compValue { font-size: var(--text-md); font-weight: var(--font-semibold); }
+.compDivider { width: 1px; height: 40px; background: var(--color-border-light); }
+.awaiting { font-size: var(--text-sm); font-weight: var(--font-regular); color: var(--color-text-tertiary); font-style: italic; }
+
+.entryNotes { font-size: var(--text-sm); color: var(--color-text-secondary); line-height: var(--leading-relaxed); }
+.calcVersion { font-size: var(--text-xs); color: var(--color-text-tertiary); }
+
+.pageTitle {
+  font-size: clamp(2rem, 3vw, 2.55rem);
+  letter-spacing: -0.035em;
+}
+
+.summaryGrid {
+  gap: 12px;
+}
+
+.summaryCard,
+.entryCard {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.entryCard {
+  border-left-width: 2px;
+}
+
+.legend {
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+}
+
+.comparison {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+}
+
+@media (max-width: 700px) {
+  .comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compDivider {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .comparison {
+    grid-template-columns: 1fr;
+  }
+}

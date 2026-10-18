@@ -1,0 +1,24 @@
+{
+  "id": "kb-018",
+  "title": "Review business resource records consistently",
+  "category": "business-institutions",
+  "summary": "Keep sites, reporting periods, measured bills, estimates, and data owners explicit before comparing operations.",
+  "content": "For an office, campus, or small business, define which sites and activities are included in each report. Keep measured bills separate from estimates, use consistent periods and units, and note who supplied each record.\n\nDo not combine different locations or periods without documenting the method. Limit access to organisational records to people who are authorised to use them; this prototype is not a full role-based identity and access management system.",
+  "audience": ["business", "institution"],
+  "applicability_conditions": ["Uses a business or institutional workspace with resource records"],
+  "implementation_steps": [
+    "List the sites and activities included in the reporting scope",
+    "Use consistent reporting periods and units",
+    "Mark each value as measured, imported, or estimated",
+    "Name a data owner and restrict access to authorised users"
+  ],
+  "limitations": ["The application does not provide enterprise-grade role-based access control", "Cross-site comparisons require consistent scopes and data quality"],
+  "source_title": "EcoTwin workspace method",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-18",
+  "last_verified_date": "2026-10-18",
+  "verification_status": "needs-review",
+  "related_recommendation_ids": ["rec-015"],
+  "tags": ["business", "institution", "data-quality", "reporting"]
+}

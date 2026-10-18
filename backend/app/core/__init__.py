@@ -1,0 +1,1 @@
+"""EcoTwin AI — Core Package"""

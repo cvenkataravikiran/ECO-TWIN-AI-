@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Build outputs
+frontend/dist/
+backend/*.db
+*.sqlite3
+
+# Environment
+.env
+.env.local
+.env.production
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Computer Vision
+computer_vision/models/*.onnx
+data/temporary_images/*
+!data/temporary_images/.gitkeep
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+htmlcov/
+.coverage

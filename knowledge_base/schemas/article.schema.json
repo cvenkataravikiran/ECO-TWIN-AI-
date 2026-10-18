@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EcoTwin knowledge article",
+  "type": "object",
+  "required": ["id", "title", "category", "summary", "content", "source_title", "source_publisher", "verification_status"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "category": { "type": "string" },
+    "summary": { "type": "string" },
+    "content": { "type": "string" },
+    "audience": { "type": "array", "items": { "type": "string" } },
+    "applicability_conditions": { "type": "array", "items": { "type": "string" } },
+    "implementation_steps": { "type": "array", "items": { "type": "string" } },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "source_title": { "type": "string" },
+    "source_publisher": { "type": "string" },
+    "source_url": { "type": "string" },
+    "publication_date": { "type": "string" },
+    "last_verified_date": { "type": "string" },
+    "verification_status": { "enum": ["verified", "unverified", "needs-review"] },
+    "related_recommendation_ids": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}

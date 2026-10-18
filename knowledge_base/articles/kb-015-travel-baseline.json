@@ -1,0 +1,24 @@
+{
+  "id": "kb-015",
+  "title": "Build a trip-level travel baseline",
+  "category": "travel-transport",
+  "summary": "Record trip distance, purpose, mode, and actual cost before comparing travel options. Safety and accessibility matter.",
+  "content": "A monthly distance total does not show which journeys can be changed. For a representative period, record trip purpose, distance, transport mode, and actual cost. Keep work, household, and business travel scopes clear.\n\nCompare alternatives only for trips where they are available, safe, accessible, and practical. Do not treat a mode shift as guaranteed or assign emissions without suitable distance, vehicle, occupancy, and regional factor data.",
+  "audience": ["individual", "household", "business", "institution"],
+  "applicability_conditions": ["Has a travel-distance record or is preparing a travel comparison"],
+  "implementation_steps": [
+    "Choose a representative week or month",
+    "Record distance, purpose, mode, and actual cost for each trip",
+    "Mark routes with safety, accessibility, or schedule constraints",
+    "Compare only practical alternatives using the recorded data"
+  ],
+  "limitations": ["Routes and services vary by location and time", "No emissions or cost savings are inferred from distance alone"],
+  "source_title": "EcoTwin measurement method",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-18",
+  "last_verified_date": "2026-10-18",
+  "verification_status": "needs-review",
+  "related_recommendation_ids": ["rec-012"],
+  "tags": ["travel", "trip-log", "transport"]
+}

@@ -1,0 +1,37 @@
+{
+  "sources": [
+    {
+      "id": "src-bee-home",
+      "title": "Bureau of Energy Efficiency (home)",
+      "publisher": "Bureau of Energy Efficiency, Ministry of Power, Government of India",
+      "url": "https://beeindia.gov.in/",
+      "applicable_region": "India",
+      "verification_status": "verified",
+      "verification_date": "2026-10-16",
+      "publication_date": null,
+      "limitations": ["Homepage confirms the institution and Standards & Labelling programme exist. Individual appliance star-rating tables were not copied into EcoTwin."]
+    },
+    {
+      "id": "src-cea-cdm",
+      "title": "CDM — CO2 Baseline Database",
+      "publisher": "Central Electricity Authority",
+      "url": "https://cea.nic.in/cdm-co2-baseline-database/?lang=en",
+      "applicable_region": "India (national grid database)",
+      "verification_status": "unverified",
+      "verification_date": "2026-10-16",
+      "publication_date": null,
+      "limitations": ["URL is the official CEA path given in the product brief. On 16 October 2026 the page required a password, so no emission factor was extracted."]
+    },
+    {
+      "id": "src-cpcb-home",
+      "title": "Central Pollution Control Board (home)",
+      "publisher": "Central Pollution Control Board",
+      "url": "https://cpcb.nic.in/",
+      "applicable_region": "India",
+      "verification_status": "verified",
+      "verification_date": "2026-10-16",
+      "publication_date": null,
+      "limitations": ["Homepage verified. City-specific GHMC pickup schedules are not published here and are not invented in EcoTwin."]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "kb-016",
+  "title": "Identify electricity use at appliance level",
+  "category": "home-energy",
+  "summary": "A monthly bill is a baseline, not an appliance breakdown. Record equipment, rated power, operating time, and meter readings where possible.",
+  "content": "List major appliances and record the information on their nameplates. Rated power multiplied by operating time can help screen for likely loads, but it is not a measured consumption result. A suitable energy meter can provide a more direct reading when used safely and according to its instructions.\n\nKeep billed electricity separate from appliance estimates. Do not open electrical equipment or disconnect devices that need to remain powered for safety or operation.",
+  "audience": ["individual", "household", "business", "institution"],
+  "applicability_conditions": ["Has an electricity bill and wants to understand its major loads"],
+  "implementation_steps": [
+    "List major appliances and record model and rated power",
+    "Estimate or record operating hours, clearly marking estimates",
+    "Use a suitable meter only as directed and where safe",
+    "Compare the appliance-level records with the billed total"
+  ],
+  "limitations": ["Nameplate power is not the same as actual energy use", "No savings or emissions are estimated without measured usage and applicable factors"],
+  "source_title": "EcoTwin measurement method",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-18",
+  "last_verified_date": "2026-10-18",
+  "verification_status": "needs-review",
+  "related_recommendation_ids": ["rec-013"],
+  "tags": ["electricity", "appliances", "measurement"]
+}

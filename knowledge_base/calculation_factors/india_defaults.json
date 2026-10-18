@@ -1,0 +1,52 @@
+{
+  "id": "factors-india-v1",
+  "version": "1.0.0",
+  "updated": "2026-10-16",
+  "locale": {
+    "currency": "INR",
+    "currency_symbol": "₹",
+    "number_locale": "en-IN",
+    "default_city": "Hyderabad",
+    "default_state": "Telangana",
+    "default_country": "India",
+    "distance_unit": "km",
+    "mass_unit": "kg",
+    "water_unit": "kL",
+    "energy_unit": "kWh",
+    "temperature_unit": "°C"
+  },
+  "electricity_grid": {
+    "factor_kg_co2e_per_kwh": null,
+    "unit": "kg CO2e/kWh",
+    "applicable_region": "India — national grid Combined Margin, not a Hyderabad-only value",
+    "source_title": "CDM — CO2 Baseline Database",
+    "source_publisher": "Central Electricity Authority (CEA), Ministry of Power",
+    "source_url": "https://cea.nic.in/cdm-co2-baseline-database/?lang=en",
+    "publication_date": null,
+    "factor_version": null,
+    "verification_status": "unverified",
+    "verification_date": "2026-10-16",
+    "limitations": [
+      "The CEA CDM CO2 Baseline Database page required authentication when checked on 16 October 2026, so no Combined Margin figure is stored as verified.",
+      "Users should paste the applicable CEA Combined Margin (or their DISCOM-published factor) into Settings. Until then, emissions from electricity are reported as not calculated.",
+      "A national CM factor must not be presented as a Telangana- or Hyderabad-specific grid intensity."
+    ]
+  },
+  "user_tariffs": {
+    "electricity_inr_per_kwh": {
+      "default": null,
+      "note": "Enter the energy charge from your TSSPDCL/TGNPDCL (or other DISCOM) bill. No official tariff is hardcoded."
+    },
+    "water_inr_per_kl": {
+      "default": null,
+      "note": "Enter the volumetric charge from your water bill. No HMWSSB rate is hardcoded."
+    }
+  },
+  "solar": {
+    "peak_sun_hours_hyderabad_illustrative": {
+      "value": null,
+      "verification_status": "unverified",
+      "note": "Do not use a guessed insolation figure. Users should enter a site-specific value from a measured or published solar atlas for their location."
+    }
+  }
+}

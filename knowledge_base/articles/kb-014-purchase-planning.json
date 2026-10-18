@@ -1,0 +1,24 @@
+{
+  "id": "kb-014",
+  "title": "Plan durable purchases around need and maintainability",
+  "category": "shopping-products",
+  "summary": "Before buying, check whether the item is needed, how it will be maintained, and whether repair or spare parts are available.",
+  "content": "For a planned durable-goods purchase, write down the need and compare products using information that applies to the exact model. Review warranty terms, repair options, spare-parts availability, and operating requirements where relevant.\n\nEnergy labels apply only to covered products and the exact labelled model. Do not infer efficiency from appearance or assume a higher purchase price will be recovered through savings without usage, tariff, and product-specific data.",
+  "audience": ["individual", "household", "business", "institution"],
+  "applicability_conditions": ["Planning a durable-goods purchase"],
+  "implementation_steps": [
+    "Write down the item and intended use",
+    "Compare model-specific labels and warranty details where applicable",
+    "Check repair and spare-parts availability",
+    "Save the actual purchase price and product details if you want a later comparison"
+  ],
+  "limitations": ["Product labels and standards vary by category", "This guide does not calculate lifecycle cost or environmental impact"],
+  "source_title": "EcoTwin decision method",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-18",
+  "last_verified_date": "2026-10-18",
+  "verification_status": "needs-review",
+  "related_recommendation_ids": ["rec-011"],
+  "tags": ["shopping", "purchase-planning", "repairability"]
+}

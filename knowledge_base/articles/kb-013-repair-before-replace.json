@@ -1,0 +1,24 @@
+{
+  "id": "kb-013",
+  "title": "Compare repair and replacement using actual quotes",
+  "category": "shopping-products",
+  "summary": "For a durable item, compare a real repair quote and replacement price, while considering safety, warranty, parts, and expected use.",
+  "content": "Before replacing a durable item, describe the fault and request a repair quote. Compare that quote with a current replacement price, including installation or delivery where relevant. Consider warranty, parts availability, product safety, and how long the item is expected to remain useful.\n\nDo not continue using unsafe electrical or gas equipment to avoid replacement. This comparison does not quantify lifecycle emissions or claim that repair is always the better choice.",
+  "audience": ["individual", "household", "business"],
+  "applicability_conditions": ["Considering a repair or replacement of a durable product"],
+  "implementation_steps": [
+    "Record the item, fault, and safety concerns",
+    "Get a repair quote from a service provider you select",
+    "Record the current replacement price and warranty",
+    "Compare the options without treating an estimate as an invoice"
+  ],
+  "limitations": ["Repair quality, parts availability, and price vary", "Safety requirements take precedence", "No lifecycle impact estimate is supplied"],
+  "source_title": "EcoTwin decision method",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-18",
+  "last_verified_date": "2026-10-18",
+  "verification_status": "needs-review",
+  "related_recommendation_ids": ["rec-010"],
+  "tags": ["repair", "replacement", "durable-goods"]
+}

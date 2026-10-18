@@ -1,0 +1,24 @@
+{
+  "id": "kb-009",
+  "title": "Institution and small-business resource records",
+  "category": "business-institutions",
+  "summary": "Colleges, canteens, and offices should log electricity, water, travel, and waste per location and period. Demonstration workspaces are labelled. Real organisational data needs access control before any public hosting.",
+  "content": "Use a separate workspace for an organisation. Assign a reporting period that matches bills (usually monthly). Keep estimated kitchen waste distinct from metered electricity.\n\nThis student prototype scopes data by workspace id. It is not a full role-based production IAM system. Do not load confidential staff or student personal data.",
+  "audience": ["business", "institution"],
+  "applicability_conditions": ["Tracks more than a single household"],
+  "implementation_steps": [
+    "Create or select the demonstration business workspace",
+    "Enter location-level bills as measured records",
+    "Assign actions to a period",
+    "Export CSV/PDF for mentors without mixing household data"
+  ],
+  "limitations": ["Memberships and fine-grained roles are a thin model in this MVP"],
+  "source_title": "EcoTwin workspace method",
+  "source_publisher": "EcoTwin AI",
+  "source_url": "",
+  "publication_date": "2026-10-16",
+  "last_verified_date": "2026-10-16",
+  "verification_status": "unverified",
+  "related_recommendation_ids": [],
+  "tags": ["business", "campus", "workspace"]
+}

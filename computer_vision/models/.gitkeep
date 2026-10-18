@@ -1,0 +1,4 @@
+# Placeholder for YOLOX-Tiny ONNX model
+# Download from: https://github.com/Megvii-BaseDetection/YOLOX
+# Licence: Apache 2.0
+# Place yolox_tiny.onnx in this directory

@@ -1,0 +1,27 @@
+{
+  "id": "kb-004",
+  "title": "Comparing local trips: walk, cycle, bus, Metro, train, carpool, two-wheeler, car",
+  "category": "travel-transport",
+  "summary": "For Hyderabad and other Indian cities, short trips can often use walking, cycling, TSRTC or city buses, Metro, suburban rail, carpool, or a two-wheeler. EcoTwin compares the costs and kilometres you enter. It does not invent fares or emission factors.",
+  "content": "Enter the one-way or round-trip distance in kilometres and how many days per week you make the trip. Then enter the cost you actually pay (fuel for a scooter/car, Metro token or pass, bus ticket). Walking and cycling have no ticket cost; you may enter optional maintenance.\n\nHyderabad has a Metro network and extensive bus services. Whether a given door-to-door trip is realistic depends on your corridor, weather, and safety — the app cannot verify that from a map you have not provided.\n\nEmissions: passenger-km factors for Indian modes are not hardcoded. If you have a documented factor you trust, you may enter it in Compare; otherwise the tool reports cost and distance only.",
+  "audience": ["individual", "household", "institution"],
+  "applicability_conditions": ["Makes regular trips in an Indian city"],
+  "implementation_steps": [
+    "Measure typical trip distance in km (odometer, Metro station distance, or maps)",
+    "Record current mode and monthly rupee cost",
+    "Use Compare to enter alternatives (walk, cycle, bus, Metro, train, carpool, personal vehicle)",
+    "Do not assume Metro is available for every neighbourhood"
+  ],
+  "limitations": [
+    "No official TSRTC or Hyderabad Metro fare table is stored",
+    "Safety, heat, and last-mile access are user judgements"
+  ],
+  "source_title": "User-entered travel records (no invented fare table)",
+  "source_publisher": "EcoTwin AI — method note",
+  "source_url": "",
+  "publication_date": "2026-10-16",
+  "last_verified_date": "2026-10-16",
+  "verification_status": "unverified",
+  "related_recommendation_ids": ["rec-004"],
+  "tags": ["Metro", "TSRTC", "walk", "cycle", "carpool", "Hyderabad", "km"]
+}
