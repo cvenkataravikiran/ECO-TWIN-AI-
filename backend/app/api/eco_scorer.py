@@ -319,8 +319,8 @@ async def analyse_image(
         model_id="yolox-tiny",
         model_version="0.1.1",
         processing_time_ms=processing_time_ms,
-        score_value=None,
-        score_max=None,
+        score_value=0,
+        score_max=100,
         evidence_coverage=0.0,
         is_reliable=False,
         image_retained=False,
@@ -358,10 +358,18 @@ async def analyse_image(
         )
 
     score_result = score_observations(
-        [{"status": "detected", "sustainability_category": d["sustainability_category"]} for d in payload_dets],
+        [
+            {
+                "status": "detected",
+                "sustainability_category": d["sustainability_category"],
+                "confidence": d["confidence"],
+            }
+            for d in payload_dets
+        ],
         rules,
     )
     assessment.score_value = score_result.get("score")
+    assessment.score_max = score_result.get("max_score")
     assessment.evidence_coverage = score_result.get("review_coverage")
     assessment.is_reliable = bool(score_result.get("is_reliable"))
     db.commit()
@@ -421,6 +429,7 @@ def update_observation(observation_id: str, payload: ObservationUpdate, db: Sess
             {
                 "status": o.status,
                 "sustainability_category": o.sustainability_category,
+                "confidence": o.confidence,
             }
             for o in all_obs
         ],

@@ -143,7 +143,8 @@ export interface EcoScorerAssessment {
   label: string;
   confirmed_observation_count: number;
   review_coverage: number;
-  contributions: Array<{ category: string }>;
+  contributions: Array<{ category: string; confidence_weight?: number; points?: number }>;
+  local_action: string;
   formula: string;
   limitations: string[];
 }

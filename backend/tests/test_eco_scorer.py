@@ -99,18 +99,71 @@ def test_assessment_never_scores_environmental_impact_from_detected_objects():
     rules = load_rules(Path(__file__).resolve().parents[2])
     result = score_observations(
         [
-            {"status": "detected", "sustainability_category": "Transport"},
+            {"status": "detected", "sustainability_category": "Transport", "confidence": 0.8},
             {"status": "confirmed", "sustainability_category": "Transport"},
             {"status": "dismissed", "sustainability_category": "Electronics"},
         ],
         rules,
     )
-    assert result["score"] is None
-    assert result["max_score"] is None
+    assert result["score"] == 25
+    assert result["max_score"] == 100
     assert result["is_reliable"] is False
     assert result["review_coverage"] == 0.67
     assert result["confirmed_observation_count"] == 1
-    assert result["contributions"] == [{"category": "Transport"}]
+    assert result["contributions"] == [
+        {"category": "Transport", "confidence_weight": 1.0, "points": 25}
+    ]
+    assert "not a rating of environmental performance" in result["formula"]
+
+
+def test_action_opportunity_score_weights_unconfirmed_detections_and_caps_at_100():
+    rules = load_rules(Path(__file__).resolve().parents[2])
+    result = score_observations(
+        [
+            {"status": "detected", "sustainability_category": "Transport", "confidence": 0.9},
+            {"status": "detected", "sustainability_category": "Water use", "confidence": 0.8},
+            {"status": "detected", "sustainability_category": "Transport", "confidence": 0.7},
+            {"status": "detected", "sustainability_category": "Unmapped / needs confirmation", "confidence": 1.0},
+            {"status": "dismissed", "sustainability_category": "Electronics and energy", "confidence": 1.0},
+        ],
+        rules,
+    )
+
+    assert result["score"] == 43
+    assert result["max_score"] == 100
+    assert len(result["contributions"]) == 2
+    assert "regular Hyderabad trip" in result["local_action"]
+
+
+def test_empty_image_returns_zero_opportunity_score_not_an_eco_rating():
+    rules = load_rules(Path(__file__).resolve().parents[2])
+    result = score_observations([], rules)
+
+    assert result["score"] == 0
+    assert result["assessment_status"] == "no_action_opportunities_detected"
+    assert result["local_action"] == ""
+    assert result["review_coverage"] == 0
+
+
+def test_action_opportunity_score_is_capped_at_100_for_many_categories():
+    rules = load_rules(Path(__file__).resolve().parents[2])
+    categories = [
+        "Transport",
+        "Water use",
+        "Reusable vs disposable",
+        "Electronics and energy",
+        "Furniture and durability",
+    ]
+    result = score_observations(
+        [
+            {"status": "confirmed", "sustainability_category": category}
+            for category in categories
+        ],
+        rules,
+    )
+
+    assert result["score"] == 100
+    assert result["max_score"] == 100
 
 
 @pytest.fixture
@@ -165,7 +218,7 @@ def test_analysis_api_validates_image_and_returns_real_empty_result(scorer_clien
     payload = response.json()
     assert payload["is_demo"] is False
     assert payload["detections"] == []
-    assert payload["eco_score"]["score"] is None
+    assert payload["eco_score"]["score"] == 0
     assert "not stored" in payload["privacy_notice"]
 
     invalid = scorer_client(
@@ -232,7 +285,7 @@ def test_analysis_returns_preliminary_knowledge_guidance_for_detected_objects(
     assert response.status_code == 200
     payload = response.json()
     assert payload["detections"][0]["status"] == "detected"
-    assert payload["eco_score"]["score"] is None
+    assert payload["eco_score"]["score"] == 23
     assert payload["recommendations"][0]["article_id"] == "kb-007"
     assert payload["recommendations"][0]["requires_confirmation"] is True
     assert payload["recommendations"][0]["implementation_steps"] == ["Confirm local rules"]
@@ -396,7 +449,7 @@ def test_confirmed_detection_retrieves_private_kb_and_saves_planner_action(db_se
         ObservationUpdate(status="confirmed"),
         db_session,
     )
-    assert updated["eco_score"]["score"] is None
+    assert updated["eco_score"]["score"] == 25
     assert updated["recommendations"][0]["article_id"] == "kb-007"
     assert updated["recommendations"][0]["requires_confirmation"] is False
     assert updated["recommendations"][0]["implementation_steps"] == ["Confirm local rules"]

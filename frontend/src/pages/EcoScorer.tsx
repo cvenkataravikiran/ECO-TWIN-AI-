@@ -456,7 +456,8 @@ export default function EcoScorer() {
           Local computer vision identifies supported COCO object classes only.
           Review and confirm detections before saving related actions.
           A photo does not establish environmental performance, lifecycle emissions, material composition,
-          local recyclability, or actual electricity use, so this feature does not invent a numeric eco-score.
+          local recyclability, or actual electricity use. The displayed score measures mapped action
+          opportunities, not environmental performance.
         </p>
       </div>
 
@@ -489,6 +490,7 @@ export default function EcoScorer() {
               accept={SUPPORTED_TYPES.join(',')}
               capture="environment"
               className={styles.hiddenInput}
+              onClick={(event) => event.stopPropagation()}
               onChange={(event) => {
                 const selected = event.target.files?.[0];
                 chooseFile(selected);
@@ -506,12 +508,19 @@ export default function EcoScorer() {
             <button
               className={styles.secondaryButton}
               type="button"
+              onClick={() => cameraInputRef.current?.click()}
+            >
+              <Camera size={16} /> Take a photo
+            </button>
+            <button
+              className={styles.secondaryButton}
+              type="button"
               onClick={() => {
                 setCameraReady(false);
                 setCameraOpen(true);
               }}
             >
-              <Camera size={16} /> Take a photo
+              <Eye size={16} /> Open live camera
             </button>
           </div>
 
@@ -692,19 +701,33 @@ export default function EcoScorer() {
             </section>
 
             <section className={styles.panelSection}>
-              <div className={styles.panelTitle}>Assessment</div>
-              <div className={styles.insufficientEvidence}>
-                <AlertTriangle size={20} />
-                <div>
-                  <strong>{analysis.eco_score.label}</strong>
-                  <p>No environmental rating is calculated from object presence or model confidence.</p>
+              <div className={styles.panelTitle}>{analysis.eco_score.label}</div>
+              <div className={styles.actionScore}>
+                <div className={styles.actionScoreValue} aria-label={`${analysis.eco_score.score ?? 0} out of 100 action opportunity score`}>
+                  {analysis.eco_score.score ?? '—'}
+                  <span> / {analysis.eco_score.max_score ?? 100}</span>
                 </div>
-                {analysis.eco_score.contributions.length > 0 && (
-                  <p className={styles.panelNote}>
-                    Confirmed observation categories (not score points): {analysis.eco_score.contributions.map((item) => item.category).join(', ')}.
-                  </p>
-                )}
+                <p>
+                  {analysis.eco_score.contributions.length > 0
+                    ? `${analysis.eco_score.contributions.length} mapped action ${analysis.eco_score.contributions.length === 1 ? 'area' : 'areas'} found in this photo.`
+                    : 'No mapped action areas were recognized. Try a clearer photo or a different scene.'}
+                </p>
               </div>
+              {analysis.eco_score.local_action && (
+                <div className={styles.localAction}>
+                  <strong>Telangana action cue</strong>
+                  <p>{analysis.eco_score.local_action}</p>
+                </div>
+              )}
+              <p className={styles.panelNote}>
+                This is an action-opportunity score—not a rating of how green this place or its occupants are.
+                A higher score means more mapped guidance areas were visible, not lower emissions or environmental impact.
+              </p>
+              {analysis.eco_score.contributions.length > 0 && (
+                <p className={styles.panelNote}>
+                  Detected action areas: {analysis.eco_score.contributions.map((item) => item.category).join(', ')}.
+                </p>
+              )}
               <div className={styles.evidenceBar}>
                 <div className={styles.evidenceLabel}>Observation review coverage</div>
                 <div className={styles.evidenceTrack}>
@@ -721,7 +744,7 @@ export default function EcoScorer() {
               {showMethodology && (
                 <div className={styles.methodology}>
                   <p>{analysis.eco_score.formula}</p>
-                  <p>Review coverage = confirmed, corrected, or dismissed detections ÷ all model detections. It describes review progress only, not environmental performance or confidence in a sustainability outcome.</p>
+                  <p>Observation review coverage = confirmed, corrected, or dismissed detections ÷ all model detections. It describes review progress only.</p>
                   <ul>{analysis.eco_score.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
                   <p>Model confidence is a detector score and may not be a calibrated probability. Corrections are user-provided and are not model-verified.</p>
                 </div>

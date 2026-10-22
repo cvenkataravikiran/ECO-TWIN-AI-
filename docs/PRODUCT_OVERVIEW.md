@@ -51,7 +51,7 @@ Contextual, deterministic recommendations use eligible workspace measurements an
 Waste hierarchy guidance: Maintain → Repair → Reuse → Donate → Recycle → Dispose. Pre-built guidance for common items.
 
 ### Eco-Scorer
-Optional local computer vision. When the YOLOX-Tiny ONNX model is installed, upload or capture an image, detect supported COCO objects, and confirm, correct, or dismiss observations. The screen foregrounds a concise possible action for reviewed detections; users confirm observations before saving related actions to the Action Planner. Guidance can suggest conditional reuse, repair, or local recycling checks, but the app does not infer that an item is harmful or recyclable from appearance and withholds a numerical environmental score.
+Optional local computer vision. When the YOLOX-Tiny ONNX model is installed, upload or capture an image, detect supported COCO objects, and confirm, correct, or dismiss observations. The Telangana Green Action Score (0–100) summarizes mapped guidance opportunities visible in the photo; it is explicitly not an environmental performance or impact rating. Telangana action cues encourage checking current local guidance without claiming that materials are recyclable or that services are available. Users confirm observations before saving related actions to the Action Planner. On mobile, **Take a photo** opens the device camera capture directly; **Open live camera** is available where secure browser camera access is supported.
 
 ### Impact Ledger
 Tracks estimated vs actual impact of completed actions. Highlights verified results vs projections.

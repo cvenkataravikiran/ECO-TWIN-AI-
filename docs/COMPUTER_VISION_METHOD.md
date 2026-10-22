@@ -20,7 +20,7 @@ Install backend dependencies from `backend` with `pip install -r requirements.tx
 4. The image is processed in memory by the configured EcoPath.AI backend and is not written to disk or retained. The assessment stores detections, confidence values, bounding boxes, review state, and model metadata, but not the image bytes or original filename.
 5. Never upload sensitive documents or photos of people without their consent.
 
-Selecting **Take a photo** opens a live browser camera preview, preferring the rear camera when available. Live camera access requires browser permission and a secure page (HTTPS or localhost); if live access is unavailable, the device camera or photo picker remains available as a fallback. The camera stream stops when the capture dialog closes. A captured image follows the same validation and processing path as a selected image.
+On mobile, selecting **Take a photo** opens the device's camera capture directly and requests the rear-facing camera where supported. **Open live camera** uses the browser camera preview when available; live camera access requires browser permission and a secure page (HTTPS or localhost). If live camera access is unavailable, the device camera or photo picker remains available as a fallback. The camera stream stops when the capture dialog closes. A captured image follows the same validation and processing path as a selected image.
 
 ## Detection and confidence
 
@@ -30,7 +30,9 @@ Supported labels are the detector's COCO classes. Sustainability guidance is ava
 
 ## Assessment formula and recommendations
 
-There is intentionally **no numerical environmental or eco-impact score**. A visible object's presence, absence, or count has no defensible positive/negative direction without additional evidence. The former category-points approach was removed because it produced a misleading score from appearance alone.
+Eco-Scorer returns a **Telangana Green Action Score (0–100)**, which is an action-opportunity index—not an environmental performance or eco-impact rating. Each distinct mapped guidance category visible in the photo contributes up to 25 points, rounded to the nearest whole point and weighted by the highest detector confidence in that category; a user-confirmed or corrected observation uses a weight of 1. The score is capped at 100. A zero means no mapped guidance category was recognized, not that the scene is environmentally poor. More points mean that more types of mapped guidance were surfaced, not that the scene is greener.
+
+The assessment also provides a Telangana action cue where a category supports one. For example, waste prompts users to check their own municipality's current instructions; it does not claim an item is recyclable or assert that a particular collection service is available. Hyderabad travel guidance is conditional on the actual route and safety. Object detection still cannot establish material, product condition, usage, lifecycle emissions, or environmental impact. The score is a product engagement aid and must not be used to compare people, homes, or businesses.
 
 The displayed review coverage is:
 
@@ -38,7 +40,7 @@ The displayed review coverage is:
 review coverage = (confirmed + corrected + dismissed detections) / all detections
 ```
 
-This is only a progress measure for reviewing model output; it is not an environmental score, evidence of impact, or model accuracy. With no detections it is zero. Detected labels with an explicit private-knowledge-base article mapping retrieve preliminary guidance immediately after analysis. The UI marks it as preliminary until the user confirms the object. Confirmed/corrected labels retain their article and limitations, and only confirmed/corrected observations can be saved to the existing Action Planner. No recommendation is returned for an unsupported label or absent article.
+This is only a progress measure for reviewing model output; it is not evidence of impact or model accuracy. With no detections it is zero. Detected labels with an explicit private-knowledge-base article mapping retrieve preliminary guidance immediately after analysis. The UI marks it as preliminary until the user confirms the object. Confirmed/corrected labels retain their article and limitations, and only confirmed/corrected observations can be saved to the existing Action Planner. No recommendation is returned for an unsupported label or absent article.
 
 These suggestions are local object detection plus deterministic mapping to curated knowledge-base articles; no generative AI or remote AI service is used. Guidance may suggest conditional actions such as reuse, repair, or checking local recycling rules, but a photo alone cannot determine whether an item is harmful, reusable, recyclable, or environmentally preferable.
 

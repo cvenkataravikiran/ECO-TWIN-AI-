@@ -1,7 +1,7 @@
 {
   "id": "eco-score-rules-v1",
   "version": "1.0.0",
-  "methodology": "COCO object detections are not environmental performance evidence. No environmental score is calculated from object presence. User-confirmed supported classes may retrieve related articles from the private knowledge base.",
+  "methodology": "The Telangana Green Action Score measures mapped action opportunities surfaced by a photo; it is not an environmental performance or impact rating. COCO object presence does not establish lifecycle emissions, materials, recyclability, or energy use. User-confirmed supported classes may retrieve related articles from the private knowledge base.",
   "limitations": [
     "COCO classes are object names, not material composition.",
     "A 'bottle' may be reusable steel or single-use PET; the user must confirm.",
