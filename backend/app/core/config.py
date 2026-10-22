@@ -13,12 +13,18 @@ _DEFAULT_DB = _PROJECT_ROOT / "data" / "ecotwin.db"
 
 
 def _load_cors_origins() -> List[str]:
-    origins = (
-        os.getenv("CORS_ORIGINS")
-        or os.getenv("CORS_ORIGIN")
-        or "http://localhost:5173,http://127.0.0.1:5173"
+    configured_origins = [
+        origin
+        for variable in ("CORS_ORIGINS", "CORS_ORIGIN")
+        for origin in os.getenv(variable, "").split(",")
+        if origin.strip()
+    ]
+    if not configured_origins:
+        configured_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+    return list(
+        dict.fromkeys(origin.strip().rstrip("/") for origin in configured_origins)
     )
-    return [origin.strip().rstrip("/") for origin in origins.split(",") if origin.strip()]
 
 
 class Settings:

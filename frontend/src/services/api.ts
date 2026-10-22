@@ -6,7 +6,7 @@
 import type { ResourceRecord, Action, Recommendation, ImpactEntry, Workspace, KnowledgeCategory } from '@/types';
 
 // const BASE_URL = 'http://localhost:8000/api';
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api').replace(/\/+$/, '');
 /** Helper to handle HTTP responses */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
