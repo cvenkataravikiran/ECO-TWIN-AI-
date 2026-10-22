@@ -8,6 +8,7 @@ from app.models.action_plan import Action
 from app.models.eco_assessment import EcoAssessment, VisualObservation
 from app.models.recommendation_rule import RecommendationRule
 from app.models.comparison import SavedComparison
+from app.models.comparison_state import WorkspaceComparisonState
 from app.models.org import OrgLocation, OrgMembership
 from app.models.user import User, UserSession
 
@@ -20,6 +21,7 @@ __all__ = [
     "VisualObservation",
     "RecommendationRule",
     "SavedComparison",
+    "WorkspaceComparisonState",
     "OrgLocation",
     "OrgMembership",
     "User",

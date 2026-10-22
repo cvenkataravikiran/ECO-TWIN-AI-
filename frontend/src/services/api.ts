@@ -314,6 +314,23 @@ export async function getWorkspaces(): Promise<Workspace[]> {
   return handleResponse<Workspace[]>(resp);
 }
 
+export async function getComparisonState<T>(workspaceId: string): Promise<T | null> {
+  const response = await apiFetch(
+    `${BASE_URL}/comparisons/state?workspace_id=${encodeURIComponent(workspaceId)}`,
+  );
+  const data = await handleResponse<{ state: T | null }>(response);
+  return data.state;
+}
+
+export async function saveComparisonState<T>(workspaceId: string, state: T): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/comparisons/state`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workspace_id: workspaceId, state }),
+  });
+  await handleResponse<{ saved: boolean }>(response);
+}
+
 export async function createWorkspace(payload: Pick<Workspace, 'name' | 'type' | 'description'>): Promise<Workspace> {
   const response = await apiFetch(`${BASE_URL}/workspaces/`, {
     method: 'POST',

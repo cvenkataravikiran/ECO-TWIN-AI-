@@ -50,6 +50,9 @@ data; signing in again restores the account's saved workspaces and records. Sess
 days. Set `SESSION_COOKIE_SECURE=true` when serving the application over HTTPS. Dashboard greetings
 follow India time without displaying a timezone label. Currency and date display are configured for
 India (INR and `en-IN`).
+Comparison scenario inputs and saved comparison summaries are stored with the active workspace and
+restored when the account signs in again. Empty scenario fields remain blank until the user enters a
+value.
 
 Demo fixtures are not part of the live startup path. `scripts/seed_demo_data.py` is only for a
 disposable presentation database and requires the explicit `ECOTWIN_ALLOW_DEMO_SEED=1` opt-in.
@@ -183,6 +186,12 @@ Copy `.env.example` and adjust:
 | `DEBUG` | `true` | Enable SQL logging |
 | `CV_MODEL_PATH` | `computer_vision/models/yolox_tiny.onnx` | CV model location |
 | `CV_CONFIDENCE_THRESHOLD` | `0.35` | Object-detection threshold (not sustainability confidence) |
+
+For deployments such as Render, use a persistent PostgreSQL database and set the backend
+`DATABASE_URL` to its connection string. The default SQLite database is suitable for local
+development, but an instance's local filesystem may be temporary and can be reset during deploys
+or restarts. The backend accepts Render's `postgres://` and standard `postgresql://` URLs using
+the installed psycopg driver.
 
 Eco-Scorer's model, input validation, confidence interpretation, evidence-only review formula, knowledge-base mappings, and limitations are documented in [docs/COMPUTER_VISION_METHOD.md](docs/COMPUTER_VISION_METHOD.md).
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Lightbulb,
   Car,
@@ -32,6 +32,8 @@ import {
   Legend,
 } from 'recharts';
 import { useWorkspace } from '@/hooks/useWorkspace';
+import { useAuth } from '@/hooks/useAuth';
+import { getComparisonState, saveComparisonState } from '@/services/api';
 import KnowledgeGuidance from '@/components/KnowledgeGuidance';
 import { formatINR } from '@/utils/currency';
 import type { ComparisonOption, DifficultyLevel } from '@/types';
@@ -65,6 +67,16 @@ interface SavedComparisonItem {
   winnerName: string;
   savedAt: string;
   annualSavings: number;
+}
+
+interface PersistedCompareState {
+  activeScenarioId: ScenarioId;
+  lighting: LightingInputs;
+  commute: CommuteInputs;
+  containers: ContainersInputs;
+  water: WaterInputs;
+  enteredInputIds: string[];
+  savedComparisons: SavedComparisonItem[];
 }
 
 // -------------------------------------------------------------
@@ -244,40 +256,60 @@ const DEFAULT_WATER: WaterInputs = {
   highEfficiencyFixtureCost: 0,
 };
 
-const COST_INPUTS_BY_SCENARIO: Record<ScenarioId, string[]> = {
+const INPUT_IDS_BY_SCENARIO: Record<ScenarioId, string[]> = {
   lighting: [
+    'numBulbs',
+    'hoursPerDay',
     'pricePerKwh',
+    'incandescentWatts',
     'incandescentBulbPrice',
+    'cflWatts',
     'cflBulbPrice',
+    'ledWatts',
     'ledBulbPrice',
   ],
   commute: [
+    'distanceKm',
+    'daysPerWeek',
     'carCostPerKm',
-    'bikePurchaseCost',
     'bikeMonthlyMaintenance',
+    'bikePurchaseCost',
     'transitMonthlyPass',
   ],
   containers: [
+    'usesPerWeek',
     'disposableUnitCost',
     'washCostPerCycle',
     'polyContainerCost',
+    'polyLifespanYears',
     'steelContainerCost',
+    'steelLifespanYears',
   ],
   water: [
+    'showerMinutesPerDay',
     'waterAndHeatingCostPerM3',
+    'standardFlowRate',
+    'aeratedFlowRate',
+    'highEfficiencyFlowRate',
     'aeratedFixtureCost',
     'highEfficiencyFixtureCost',
   ],
 };
 
-function isCostEntered(value: number, id: string, explicitlyEnteredCosts: string[]): boolean {
-  return value > 0 || explicitlyEnteredCosts.includes(id);
+function isCostEntered(value: number, id: string, enteredInputIds: string[]): boolean {
+  return value > 0 || enteredInputIds.includes(id);
 }
 
 // -------------------------------------------------------------
 // Component
 // -------------------------------------------------------------
 export default function Compare() {
+  const { currentWorkspace } = useWorkspace();
+  const { user } = useAuth();
+  return <CompareWorkspace key={`${user?.id ?? ''}:${currentWorkspace.id}`} />;
+}
+
+function CompareWorkspace() {
   const {
     currentWorkspace,
     workspacesLoading,
@@ -292,11 +324,23 @@ export default function Compare() {
   const [commute, setCommute] = useState<CommuteInputs>(DEFAULT_COMMUTE);
   const [containers, setContainers] = useState<ContainersInputs>(DEFAULT_CONTAINERS);
   const [water, setWater] = useState<WaterInputs>(DEFAULT_WATER);
-  const [explicitlyEnteredCosts, setExplicitlyEnteredCosts] = useState<string[]>([]);
+  const [enteredInputIds, setEnteredInputIds] = useState<string[]>([]);
   const [submittedInputSnapshot, setSubmittedInputSnapshot] = useState<string | null>(null);
+  const [comparisonStateWorkspaceId, setComparisonStateWorkspaceId] = useState('');
+  const [comparisonStateError, setComparisonStateError] = useState('');
+  const [comparisonStateStatus, setComparisonStateStatus] = useState('');
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
-  const recordCostInput = (id: string) => {
-    setExplicitlyEnteredCosts((previous) => previous.includes(id) ? previous : [...previous, id]);
+  const recordInput = (id: string) => {
+    setEnteredInputIds((previous) => previous.includes(id) ? previous : [...previous, id]);
+  };
+
+  const enqueueStateSave = (workspaceId: string, state: PersistedCompareState) => {
+    const save = saveQueue.current
+      .catch(() => undefined)
+      .then(() => saveComparisonState(workspaceId, state));
+    saveQueue.current = save;
+    return save;
   };
 
   // UI States
@@ -305,6 +349,97 @@ export default function Compare() {
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
   const [savedComparisons, setSavedComparisons] = useState<SavedComparisonItem[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const workspaceId = currentWorkspace.id;
+
+    if (!workspaceId || workspacesLoading) return undefined;
+
+    getComparisonState<PersistedCompareState>(workspaceId)
+      .then((state) => {
+        if (cancelled) return;
+        if (state) {
+          const activeScenario = SCENARIOS.some((scenario) => scenario.id === state.activeScenarioId)
+            ? state.activeScenarioId
+            : 'lighting';
+          setActiveScenarioId(activeScenario);
+          setLighting({ ...DEFAULT_LIGHTING, ...state.lighting });
+          setCommute({ ...DEFAULT_COMMUTE, ...state.commute });
+          setContainers({ ...DEFAULT_CONTAINERS, ...state.containers });
+          setWater({ ...DEFAULT_WATER, ...state.water });
+          setEnteredInputIds(state.enteredInputIds ?? []);
+          setSavedComparisons(state.savedComparisons ?? []);
+        } else {
+          setActiveScenarioId('lighting');
+        }
+        setComparisonStateWorkspaceId(workspaceId);
+        setComparisonStateStatus('Scenario data is ready. Changes are saved to this workspace.');
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : 'Unable to restore scenario data.';
+        setComparisonStateError(message);
+        setComparisonStateStatus('');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentWorkspace.id, workspacesLoading]);
+
+  useEffect(() => {
+    if (
+      !currentWorkspace.id ||
+      comparisonStateWorkspaceId !== currentWorkspace.id ||
+      workspacesLoading
+    ) return undefined;
+
+    const workspaceId = currentWorkspace.id;
+    const state: PersistedCompareState = {
+      activeScenarioId,
+      lighting,
+      commute,
+      containers,
+      water,
+      enteredInputIds,
+      savedComparisons,
+    };
+    const timer = window.setTimeout(() => {
+      setComparisonStateStatus('Saving scenario data…');
+      setComparisonStateError('');
+      void enqueueStateSave(workspaceId, state)
+        .then(() => {
+          if (comparisonStateWorkspaceId === workspaceId) {
+            setComparisonStateStatus('Scenario data saved to this workspace.');
+          }
+        })
+        .catch((error: unknown) => {
+          if (comparisonStateWorkspaceId === workspaceId) {
+            setComparisonStateError(
+              error instanceof Error ? error.message : 'Unable to save scenario data.',
+            );
+            setComparisonStateStatus('');
+          }
+        });
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    currentWorkspace.id,
+    workspacesLoading,
+    comparisonStateWorkspaceId,
+    activeScenarioId,
+    lighting,
+    commute,
+    containers,
+    water,
+    enteredInputIds,
+    savedComparisons,
+  ]);
+
+  const inputValue = (id: string, value: number) =>
+    enteredInputIds.includes(id) ? value : '';
 
   // Active Scenario Metadata
   const currentScenarioMeta = useMemo(() => {
@@ -317,8 +452,8 @@ export default function Compare() {
     if (activeScenarioId === 'commute') setCommute(DEFAULT_COMMUTE);
     if (activeScenarioId === 'containers') setContainers(DEFAULT_CONTAINERS);
     if (activeScenarioId === 'water') setWater(DEFAULT_WATER);
-    setExplicitlyEnteredCosts((previous) =>
-      previous.filter((id) => !COST_INPUTS_BY_SCENARIO[activeScenarioId].includes(id)),
+    setEnteredInputIds((previous) =>
+      previous.filter((id) => !INPUT_IDS_BY_SCENARIO[activeScenarioId].includes(id)),
     );
     setToastMessage('Inputs cleared. Enter your own values to compare options.');
     setTimeout(() => setToastMessage(null), 3000);
@@ -337,38 +472,38 @@ export default function Compare() {
       return [
         lighting.numBulbs > 0 ? '' : 'number of bulbs',
         lighting.hoursPerDay > 0 ? '' : 'daily operating hours',
-        isCostEntered(lighting.pricePerKwh, 'pricePerKwh', explicitlyEnteredCosts) ? '' : 'electricity tariff',
-        isCostEntered(lighting.incandescentBulbPrice, 'incandescentBulbPrice', explicitlyEnteredCosts) ? '' : 'incandescent bulb price',
-        isCostEntered(lighting.cflBulbPrice, 'cflBulbPrice', explicitlyEnteredCosts) ? '' : 'CFL bulb price',
-        isCostEntered(lighting.ledBulbPrice, 'ledBulbPrice', explicitlyEnteredCosts) ? '' : 'LED bulb price',
+        isCostEntered(lighting.pricePerKwh, 'pricePerKwh', enteredInputIds) ? '' : 'electricity tariff',
+        isCostEntered(lighting.incandescentBulbPrice, 'incandescentBulbPrice', enteredInputIds) ? '' : 'incandescent bulb price',
+        isCostEntered(lighting.cflBulbPrice, 'cflBulbPrice', enteredInputIds) ? '' : 'CFL bulb price',
+        isCostEntered(lighting.ledBulbPrice, 'ledBulbPrice', enteredInputIds) ? '' : 'LED bulb price',
       ].filter(Boolean);
     }
     if (activeScenarioId === 'commute') {
       return [
         commute.distanceKm > 0 ? '' : 'round-trip distance',
         commute.daysPerWeek > 0 ? '' : 'commute days per week',
-        isCostEntered(commute.carCostPerKm, 'carCostPerKm', explicitlyEnteredCosts) ? '' : 'car variable cost per kilometre',
-        isCostEntered(commute.bikePurchaseCost, 'bikePurchaseCost', explicitlyEnteredCosts) ? '' : 'bicycle purchase cost',
-        isCostEntered(commute.bikeMonthlyMaintenance, 'bikeMonthlyMaintenance', explicitlyEnteredCosts) ? '' : 'bicycle monthly upkeep',
-        isCostEntered(commute.transitMonthlyPass, 'transitMonthlyPass', explicitlyEnteredCosts) ? '' : 'monthly transit cost',
+        isCostEntered(commute.carCostPerKm, 'carCostPerKm', enteredInputIds) ? '' : 'car variable cost per kilometre',
+        isCostEntered(commute.bikePurchaseCost, 'bikePurchaseCost', enteredInputIds) ? '' : 'bicycle purchase cost',
+        isCostEntered(commute.bikeMonthlyMaintenance, 'bikeMonthlyMaintenance', enteredInputIds) ? '' : 'bicycle monthly upkeep',
+        isCostEntered(commute.transitMonthlyPass, 'transitMonthlyPass', enteredInputIds) ? '' : 'monthly transit cost',
       ].filter(Boolean);
     }
     if (activeScenarioId === 'containers') {
       return [
         containers.usesPerWeek > 0 ? '' : 'container uses per week',
-        isCostEntered(containers.disposableUnitCost, 'disposableUnitCost', explicitlyEnteredCosts) ? '' : 'disposable item cost',
-        isCostEntered(containers.washCostPerCycle, 'washCostPerCycle', explicitlyEnteredCosts) ? '' : 'wash cost per cycle',
-        isCostEntered(containers.polyContainerCost, 'polyContainerCost', explicitlyEnteredCosts) ? '' : 'reusable container cost',
-        isCostEntered(containers.steelContainerCost, 'steelContainerCost', explicitlyEnteredCosts) ? '' : 'durable container cost',
+        isCostEntered(containers.disposableUnitCost, 'disposableUnitCost', enteredInputIds) ? '' : 'disposable item cost',
+        isCostEntered(containers.washCostPerCycle, 'washCostPerCycle', enteredInputIds) ? '' : 'wash cost per cycle',
+        isCostEntered(containers.polyContainerCost, 'polyContainerCost', enteredInputIds) ? '' : 'reusable container cost',
+        isCostEntered(containers.steelContainerCost, 'steelContainerCost', enteredInputIds) ? '' : 'durable container cost',
       ].filter(Boolean);
     }
     return [
       water.showerMinutesPerDay > 0 ? '' : 'daily shower duration',
-      isCostEntered(water.waterAndHeatingCostPerM3, 'waterAndHeatingCostPerM3', explicitlyEnteredCosts) ? '' : 'water and heating tariff',
-      isCostEntered(water.aeratedFixtureCost, 'aeratedFixtureCost', explicitlyEnteredCosts) ? '' : 'aerated fixture cost',
-      isCostEntered(water.highEfficiencyFixtureCost, 'highEfficiencyFixtureCost', explicitlyEnteredCosts) ? '' : 'high-efficiency fixture cost',
+      isCostEntered(water.waterAndHeatingCostPerM3, 'waterAndHeatingCostPerM3', enteredInputIds) ? '' : 'water and heating tariff',
+      isCostEntered(water.aeratedFixtureCost, 'aeratedFixtureCost', enteredInputIds) ? '' : 'aerated fixture cost',
+      isCostEntered(water.highEfficiencyFixtureCost, 'highEfficiencyFixtureCost', enteredInputIds) ? '' : 'high-efficiency fixture cost',
     ].filter(Boolean);
-  }, [activeScenarioId, lighting, commute, containers, water, explicitlyEnteredCosts]);
+  }, [activeScenarioId, lighting, commute, containers, water, enteredInputIds]);
 
   const inputSnapshot = JSON.stringify([
     activeScenarioId,
@@ -376,7 +511,7 @@ export default function Compare() {
     commute,
     containers,
     water,
-    explicitlyEnteredCosts,
+    enteredInputIds,
   ]);
 
   // -------------------------------------------------------------
@@ -927,8 +1062,13 @@ export default function Compare() {
   // -------------------------------------------------------------
   // SAVE COMPARISON HANDLER
   // -------------------------------------------------------------
-  const handleSaveComparison = () => {
+  const handleSaveComparison = async () => {
     if (!winner) return;
+    if (!currentWorkspace.id || comparisonStateWorkspaceId !== currentWorkspace.id) {
+      setToastMessage('Select a workspace before saving this comparison.');
+      setTimeout(() => setToastMessage(null), 3500);
+      return;
+    }
 
     const newSave: SavedComparisonItem = {
       id: `saved-${Date.now()}`,
@@ -939,9 +1079,31 @@ export default function Compare() {
       annualSavings: winner.annualSavings,
     };
 
-    setSavedComparisons((prev) => [newSave, ...prev]);
-    setToastMessage('Added to this page session only. This comparison is not saved to your workspace.');
-    setTimeout(() => setToastMessage(null), 3500);
+    const nextSavedComparisons = [newSave, ...savedComparisons];
+    const state: PersistedCompareState = {
+      activeScenarioId,
+      lighting,
+      commute,
+      containers,
+      water,
+      enteredInputIds,
+      savedComparisons: nextSavedComparisons,
+    };
+    setComparisonStateStatus('Saving comparison to this workspace…');
+    try {
+      await enqueueStateSave(currentWorkspace.id, state);
+      setSavedComparisons(nextSavedComparisons);
+      setComparisonStateError('');
+      setComparisonStateStatus('Comparison saved to this workspace.');
+      setToastMessage('Comparison saved to your workspace.');
+      setTimeout(() => setToastMessage(null), 3500);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to save this comparison.';
+      setComparisonStateError(message);
+      setComparisonStateStatus('');
+      setToastMessage('Comparison could not be saved. Check the workspace connection and try again.');
+      setTimeout(() => setToastMessage(null), 3500);
+    }
   };
 
   const handleDeleteSaved = (id: string) => {
@@ -953,6 +1115,27 @@ export default function Compare() {
     if (val === null || val === undefined) return '—';
     return formatINR(val);
   };
+
+  if (
+    currentWorkspace.id &&
+    comparisonStateWorkspaceId !== currentWorkspace.id
+  ) {
+    return (
+      <main className={styles.page}>
+        <div
+          className={styles.demoDisclaimerBanner}
+          role={comparisonStateError ? 'alert' : 'status'}
+        >
+          <Info size={16} />
+          <span>
+            {comparisonStateError
+              ? `Unable to load this workspace's saved scenario data. ${comparisonStateError}`
+              : 'Loading this workspace’s saved scenario data…'}
+          </span>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -995,6 +1178,17 @@ export default function Compare() {
             {workspacesError
               ? `Could not load live workspaces. Open the workspace selector in the sidebar to retry. ${workspacesError}`
               : 'Create a workspace from the left sidebar to use features that save live data. Comparisons can still be calculated here, but are kept only for this page session.'}
+          </span>
+        </div>
+      )}
+
+      {(comparisonStateStatus || comparisonStateError) && currentWorkspace.id && (
+        <div className={styles.demoDisclaimerBanner} role={comparisonStateError ? 'alert' : 'status'}>
+          <Info size={16} />
+          <span>
+            {comparisonStateError
+              ? `Scenario data could not be synchronized with this workspace. Your latest edits may not be saved. ${comparisonStateError}`
+              : comparisonStateStatus}
           </span>
         </div>
       )}
@@ -1066,10 +1260,10 @@ export default function Compare() {
             type="button"
             className={styles.btnPrimary}
             onClick={handleSaveComparison}
-            title="Keep this comparison in the current page session only"
+            title="Save this comparison and its inputs to the current workspace"
           >
             <BookmarkCheck size={16} />
-            Keep for This Session
+            Save Comparison
           </button>
         </section>
       )}
@@ -1110,10 +1304,11 @@ export default function Compare() {
                     max={150}
                     step={1}
                     className={styles.inputField}
-                    value={lighting.numBulbs}
-                    onChange={(e) =>
-                      setLighting({ ...lighting, numBulbs: Math.max(0, Number(e.target.value) || 0) })
-                    }
+                    value={inputValue('numBulbs', lighting.numBulbs)}
+                    onChange={(e) => {
+                      recordInput('numBulbs');
+                      setLighting({ ...lighting, numBulbs: Math.max(0, Number(e.target.value) || 0) });
+                    }}
                   />
                   <span className={styles.inputSuffix}>bulbs</span>
                 </div>
@@ -1131,13 +1326,14 @@ export default function Compare() {
                     max={24}
                     step={0.5}
                     className={styles.inputField}
-                    value={lighting.hoursPerDay}
-                    onChange={(e) =>
+                    value={inputValue('hoursPerDay', lighting.hoursPerDay)}
+                    onChange={(e) => {
+                      recordInput('hoursPerDay');
                       setLighting({
                         ...lighting,
                         hoursPerDay: Math.max(0, Math.min(24, Number(e.target.value) || 0)),
-                      })
-                    }
+                      });
+                    }}
                   />
                   <span className={styles.inputSuffix}>hrs/day</span>
                 </div>
@@ -1154,9 +1350,9 @@ export default function Compare() {
                     min={0}
                     step={0.01}
                     className={styles.inputField}
-                    value={lighting.pricePerKwh}
+                    value={inputValue('pricePerKwh', lighting.pricePerKwh)}
                     onChange={(e) => {
-                      recordCostInput('pricePerKwh');
+                      recordInput('pricePerKwh');
                       setLighting({
                         ...lighting,
                         pricePerKwh: Math.max(0, Number(e.target.value) || 0),
@@ -1182,9 +1378,9 @@ export default function Compare() {
                       min={0}
                       step={0.5}
                       className={styles.inputField}
-                      value={value}
+                      value={inputValue(id, value)}
                       onChange={(e) => {
-                        recordCostInput(id);
+                        recordInput(id);
                         setLighting({
                           ...lighting,
                           [id]: Math.max(0, Number(e.target.value) || 0),
@@ -1212,10 +1408,11 @@ export default function Compare() {
                     max={200}
                     step={1}
                     className={styles.inputField}
-                    value={commute.distanceKm}
-                    onChange={(e) =>
+                    value={inputValue('distanceKm', commute.distanceKm)}
+                    onChange={(e) => {
+                      recordInput('distanceKm');
                       setCommute({ ...commute, distanceKm: Math.max(0, Number(e.target.value) || 0) })
-                    }
+                    }}
                   />
                   <span className={styles.inputSuffix}>km / day</span>
                 </div>
@@ -1233,13 +1430,14 @@ export default function Compare() {
                     max={7}
                     step={1}
                     className={styles.inputField}
-                    value={commute.daysPerWeek}
-                    onChange={(e) =>
+                    value={inputValue('daysPerWeek', commute.daysPerWeek)}
+                    onChange={(e) => {
+                      recordInput('daysPerWeek');
                       setCommute({
                         ...commute,
                         daysPerWeek: Math.max(0, Math.min(7, Number(e.target.value) || 0)),
-                      })
-                    }
+                      });
+                    }}
                   />
                   <span className={styles.inputSuffix}>days / wk</span>
                 </div>
@@ -1256,9 +1454,9 @@ export default function Compare() {
                     min={0}
                     step={0.02}
                     className={styles.inputField}
-                    value={commute.carCostPerKm}
+                    value={inputValue('carCostPerKm', commute.carCostPerKm)}
                     onChange={(e) => {
-                      recordCostInput('carCostPerKm');
+                      recordInput('carCostPerKm');
                       setCommute({
                         ...commute,
                         carCostPerKm: Math.max(0, Number(e.target.value) || 0),
@@ -1280,9 +1478,9 @@ export default function Compare() {
                     min={0}
                     step={5}
                     className={styles.inputField}
-                    value={commute.transitMonthlyPass}
+                    value={inputValue('transitMonthlyPass', commute.transitMonthlyPass)}
                     onChange={(e) => {
-                      recordCostInput('transitMonthlyPass');
+                      recordInput('transitMonthlyPass');
                       setCommute({
                         ...commute,
                         transitMonthlyPass: Math.max(0, Number(e.target.value) || 0),
@@ -1304,9 +1502,9 @@ export default function Compare() {
                     min={0}
                     step={50}
                     className={styles.inputField}
-                    value={commute.bikePurchaseCost}
+                    value={inputValue('bikePurchaseCost', commute.bikePurchaseCost)}
                     onChange={(e) => {
-                      recordCostInput('bikePurchaseCost');
+                      recordInput('bikePurchaseCost');
                       setCommute({
                         ...commute,
                         bikePurchaseCost: Math.max(0, Number(e.target.value) || 0),
@@ -1328,9 +1526,9 @@ export default function Compare() {
                     min={0}
                     step={2}
                     className={styles.inputField}
-                    value={commute.bikeMonthlyMaintenance}
+                    value={inputValue('bikeMonthlyMaintenance', commute.bikeMonthlyMaintenance)}
                     onChange={(e) => {
-                      recordCostInput('bikeMonthlyMaintenance');
+                      recordInput('bikeMonthlyMaintenance');
                       setCommute({
                         ...commute,
                         bikeMonthlyMaintenance: Math.max(0, Number(e.target.value) || 0),
@@ -1357,13 +1555,14 @@ export default function Compare() {
                     max={50}
                     step={1}
                     className={styles.inputField}
-                    value={containers.usesPerWeek}
-                    onChange={(e) =>
+                    value={inputValue('usesPerWeek', containers.usesPerWeek)}
+                    onChange={(e) => {
+                      recordInput('usesPerWeek');
                       setContainers({
                         ...containers,
                         usesPerWeek: Math.max(0, Number(e.target.value) || 0),
-                      })
-                    }
+                      });
+                    }}
                   />
                   <span className={styles.inputSuffix}>uses / wk</span>
                 </div>
@@ -1380,9 +1579,9 @@ export default function Compare() {
                     min={0}
                     step={0.05}
                     className={styles.inputField}
-                    value={containers.disposableUnitCost}
+                    value={inputValue('disposableUnitCost', containers.disposableUnitCost)}
                     onChange={(e) => {
-                      recordCostInput('disposableUnitCost');
+                      recordInput('disposableUnitCost');
                       setContainers({
                         ...containers,
                         disposableUnitCost: Math.max(0, Number(e.target.value) || 0),
@@ -1404,9 +1603,9 @@ export default function Compare() {
                     min={0}
                     step={0.005}
                     className={styles.inputField}
-                    value={containers.washCostPerCycle}
+                    value={inputValue('washCostPerCycle', containers.washCostPerCycle)}
                     onChange={(e) => {
-                      recordCostInput('washCostPerCycle');
+                      recordInput('washCostPerCycle');
                       setContainers({
                         ...containers,
                         washCostPerCycle: Math.max(0, Number(e.target.value) || 0),
@@ -1428,9 +1627,9 @@ export default function Compare() {
                     min={0}
                     step={5}
                     className={styles.inputField}
-                    value={containers.polyContainerCost}
+                    value={inputValue('polyContainerCost', containers.polyContainerCost)}
                     onChange={(e) => {
-                      recordCostInput('polyContainerCost');
+                      recordInput('polyContainerCost');
                       setContainers({
                         ...containers,
                         polyContainerCost: Math.max(0, Number(e.target.value) || 0),
@@ -1452,9 +1651,9 @@ export default function Compare() {
                     min={0}
                     step={5}
                     className={styles.inputField}
-                    value={containers.steelContainerCost}
+                    value={inputValue('steelContainerCost', containers.steelContainerCost)}
                     onChange={(e) => {
-                      recordCostInput('steelContainerCost');
+                      recordInput('steelContainerCost');
                       setContainers({
                         ...containers,
                         steelContainerCost: Math.max(0, Number(e.target.value) || 0),
@@ -1481,13 +1680,14 @@ export default function Compare() {
                     max={120}
                     step={2}
                     className={styles.inputField}
-                    value={water.showerMinutesPerDay}
-                    onChange={(e) =>
+                    value={inputValue('showerMinutesPerDay', water.showerMinutesPerDay)}
+                    onChange={(e) => {
+                      recordInput('showerMinutesPerDay');
                       setWater({
                         ...water,
                         showerMinutesPerDay: Math.max(0, Number(e.target.value) || 0),
-                      })
-                    }
+                      });
+                    }}
                   />
                   <span className={styles.inputSuffix}>min / day</span>
                 </div>
@@ -1504,9 +1704,9 @@ export default function Compare() {
                     min={0}
                     step={0.5}
                     className={styles.inputField}
-                    value={water.waterAndHeatingCostPerM3}
+                    value={inputValue('waterAndHeatingCostPerM3', water.waterAndHeatingCostPerM3)}
                     onChange={(e) => {
-                      recordCostInput('waterAndHeatingCostPerM3');
+                      recordInput('waterAndHeatingCostPerM3');
                       setWater({
                         ...water,
                         waterAndHeatingCostPerM3: Math.max(0, Number(e.target.value) || 0),
@@ -1528,9 +1728,9 @@ export default function Compare() {
                     min={0}
                     step={5}
                     className={styles.inputField}
-                    value={water.aeratedFixtureCost}
+                    value={inputValue('aeratedFixtureCost', water.aeratedFixtureCost)}
                     onChange={(e) => {
-                      recordCostInput('aeratedFixtureCost');
+                      recordInput('aeratedFixtureCost');
                       setWater({
                         ...water,
                         aeratedFixtureCost: Math.max(0, Number(e.target.value) || 0),
@@ -1552,9 +1752,9 @@ export default function Compare() {
                     min={0}
                     step={5}
                     className={styles.inputField}
-                    value={water.highEfficiencyFixtureCost}
+                    value={inputValue('highEfficiencyFixtureCost', water.highEfficiencyFixtureCost)}
                     onChange={(e) => {
-                      recordCostInput('highEfficiencyFixtureCost');
+                      recordInput('highEfficiencyFixtureCost');
                       setWater({
                         ...water,
                         highEfficiencyFixtureCost: Math.max(0, Number(e.target.value) || 0),
@@ -1678,12 +1878,13 @@ export default function Compare() {
                               max={150}
                               className={styles.inputField}
                               value={lighting.incandescentWatts}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                recordInput('incandescentWatts');
                                 setLighting({
                                   ...lighting,
                                   incandescentWatts: Number(e.target.value) || 60,
-                                })
-                              }
+                                });
+                              }}
                             />
                           </div>
                           <div className={styles.inputGroup}>
@@ -1695,9 +1896,9 @@ export default function Compare() {
                               min={0}
                               step={0.2}
                               className={styles.inputField}
-                              value={lighting.incandescentBulbPrice}
+                              value={inputValue('incandescentBulbPrice', lighting.incandescentBulbPrice)}
                               onChange={(e) => {
-                                recordCostInput('incandescentBulbPrice');
+                                recordInput('incandescentBulbPrice');
                                 setLighting({
                                   ...lighting,
                                   incandescentBulbPrice: Number(e.target.value) || 0,
@@ -1719,12 +1920,13 @@ export default function Compare() {
                               max={30}
                               className={styles.inputField}
                               value={lighting.cflWatts}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                recordInput('cflWatts');
                                 setLighting({
                                   ...lighting,
                                   cflWatts: Number(e.target.value) || 14,
-                                })
-                              }
+                                });
+                              }}
                             />
                           </div>
                           <div className={styles.inputGroup}>
@@ -1736,9 +1938,9 @@ export default function Compare() {
                               min={0}
                               step={0.5}
                               className={styles.inputField}
-                              value={lighting.cflBulbPrice}
+                              value={inputValue('cflBulbPrice', lighting.cflBulbPrice)}
                               onChange={(e) => {
-                                recordCostInput('cflBulbPrice');
+                                recordInput('cflBulbPrice');
                                 setLighting({
                                   ...lighting,
                                   cflBulbPrice: Number(e.target.value) || 0,
@@ -1760,12 +1962,13 @@ export default function Compare() {
                               max={25}
                               className={styles.inputField}
                               value={lighting.ledWatts}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                recordInput('ledWatts');
                                 setLighting({
                                   ...lighting,
                                   ledWatts: Number(e.target.value) || 9,
-                                })
-                              }
+                                });
+                              }}
                             />
                           </div>
                           <div className={styles.inputGroup}>
@@ -1777,9 +1980,9 @@ export default function Compare() {
                               min={0}
                               step={0.5}
                               className={styles.inputField}
-                              value={lighting.ledBulbPrice}
+                              value={inputValue('ledBulbPrice', lighting.ledBulbPrice)}
                               onChange={(e) => {
-                                recordCostInput('ledBulbPrice');
+                                recordInput('ledBulbPrice');
                                 setLighting({
                                   ...lighting,
                                   ledBulbPrice: Number(e.target.value) || 0,
@@ -1804,9 +2007,9 @@ export default function Compare() {
                             min={0}
                             step={0.02}
                             className={styles.inputField}
-                            value={commute.carCostPerKm}
+                            value={inputValue('carCostPerKm', commute.carCostPerKm)}
                             onChange={(e) => {
-                              recordCostInput('carCostPerKm');
+                              recordInput('carCostPerKm');
                               setCommute({
                                 ...commute,
                                 carCostPerKm: Number(e.target.value) || 0,
@@ -1826,9 +2029,9 @@ export default function Compare() {
                               min={0}
                               step={50}
                               className={styles.inputField}
-                              value={commute.bikePurchaseCost}
+                              value={inputValue('bikePurchaseCost', commute.bikePurchaseCost)}
                               onChange={(e) => {
-                                recordCostInput('bikePurchaseCost');
+                                recordInput('bikePurchaseCost');
                                 setCommute({
                                   ...commute,
                                   bikePurchaseCost: Number(e.target.value) || 0,
@@ -1845,9 +2048,9 @@ export default function Compare() {
                               min={0}
                               step={2}
                               className={styles.inputField}
-                              value={commute.bikeMonthlyMaintenance}
+                              value={inputValue('bikeMonthlyMaintenance', commute.bikeMonthlyMaintenance)}
                               onChange={(e) => {
-                                recordCostInput('bikeMonthlyMaintenance');
+                                recordInput('bikeMonthlyMaintenance');
                                 setCommute({
                                   ...commute,
                                   bikeMonthlyMaintenance: Number(e.target.value) || 0,
@@ -1867,9 +2070,9 @@ export default function Compare() {
                             min={0}
                             step={5}
                             className={styles.inputField}
-                            value={commute.transitMonthlyPass}
+                            value={inputValue('transitMonthlyPass', commute.transitMonthlyPass)}
                             onChange={(e) => {
-                              recordCostInput('transitMonthlyPass');
+                              recordInput('transitMonthlyPass');
                               setCommute({
                                 ...commute,
                                 transitMonthlyPass: Number(e.target.value) || 0,
@@ -1893,9 +2096,9 @@ export default function Compare() {
                             min={0}
                             step={0.05}
                             className={styles.inputField}
-                            value={containers.disposableUnitCost}
+                            value={inputValue('disposableUnitCost', containers.disposableUnitCost)}
                             onChange={(e) => {
-                              recordCostInput('disposableUnitCost');
+                              recordInput('disposableUnitCost');
                               setContainers({
                                 ...containers,
                                 disposableUnitCost: Number(e.target.value) || 0,
@@ -1915,9 +2118,9 @@ export default function Compare() {
                               min={3}
                               step={1}
                               className={styles.inputField}
-                              value={containers.polyContainerCost}
+                              value={inputValue('polyContainerCost', containers.polyContainerCost)}
                               onChange={(e) => {
-                                recordCostInput('polyContainerCost');
+                                recordInput('polyContainerCost');
                                 setContainers({
                                   ...containers,
                                   polyContainerCost: Number(e.target.value) || 0,
@@ -1936,12 +2139,13 @@ export default function Compare() {
                               step={1}
                               className={styles.inputField}
                               value={containers.polyLifespanYears}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                recordInput('polyLifespanYears');
                                 setContainers({
                                   ...containers,
                                   polyLifespanYears: Number(e.target.value) || 2,
-                                })
-                              }
+                                });
+                              }}
                             />
                           </div>
                         </>
@@ -1957,9 +2161,9 @@ export default function Compare() {
                               min={10}
                               step={2}
                               className={styles.inputField}
-                              value={containers.steelContainerCost}
+                              value={inputValue('steelContainerCost', containers.steelContainerCost)}
                               onChange={(e) => {
-                                recordCostInput('steelContainerCost');
+                                recordInput('steelContainerCost');
                                 setContainers({
                                   ...containers,
                                   steelContainerCost: Number(e.target.value) || 0,
@@ -1977,12 +2181,13 @@ export default function Compare() {
                               step={1}
                               className={styles.inputField}
                               value={containers.steelLifespanYears}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                recordInput('steelLifespanYears');
                                 setContainers({
                                   ...containers,
                                   steelLifespanYears: Number(e.target.value) || 5,
-                                })
-                              }
+                                });
+                              }}
                             />
                           </div>
                         </>
@@ -2004,12 +2209,13 @@ export default function Compare() {
                             step={0.5}
                             className={styles.inputField}
                             value={water.standardFlowRate}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              recordInput('standardFlowRate');
                               setWater({
                                 ...water,
                                 standardFlowRate: Number(e.target.value) || 12,
-                              })
-                            }
+                              });
+                            }}
                           />
                         </div>
                       )}
@@ -2026,12 +2232,13 @@ export default function Compare() {
                               step={0.5}
                               className={styles.inputField}
                               value={water.aeratedFlowRate}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                recordInput('aeratedFlowRate');
                                 setWater({
                                   ...water,
                                   aeratedFlowRate: Number(e.target.value) || 7.5,
-                                })
-                              }
+                                });
+                              }}
                             />
                           </div>
                           <div className={styles.inputGroup}>
@@ -2043,9 +2250,9 @@ export default function Compare() {
                               min={0}
                               step={2}
                               className={styles.inputField}
-                              value={water.aeratedFixtureCost}
+                              value={inputValue('aeratedFixtureCost', water.aeratedFixtureCost)}
                               onChange={(e) => {
-                                recordCostInput('aeratedFixtureCost');
+                                recordInput('aeratedFixtureCost');
                                 setWater({
                                   ...water,
                                   aeratedFixtureCost: Number(e.target.value) || 0,
@@ -2068,12 +2275,13 @@ export default function Compare() {
                               step={0.5}
                               className={styles.inputField}
                               value={water.highEfficiencyFlowRate}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                recordInput('highEfficiencyFlowRate');
                                 setWater({
                                   ...water,
                                   highEfficiencyFlowRate: Number(e.target.value) || 5.5,
-                                })
-                              }
+                                });
+                              }}
                             />
                           </div>
                           <div className={styles.inputGroup}>
@@ -2085,9 +2293,9 @@ export default function Compare() {
                               min={0}
                               step={5}
                               className={styles.inputField}
-                              value={water.highEfficiencyFixtureCost}
+                              value={inputValue('highEfficiencyFixtureCost', water.highEfficiencyFixtureCost)}
                               onChange={(e) => {
-                                recordCostInput('highEfficiencyFixtureCost');
+                                recordInput('highEfficiencyFixtureCost');
                                 setWater({
                                   ...water,
                                   highEfficiencyFixtureCost: Number(e.target.value) || 0,
@@ -2581,14 +2789,14 @@ export default function Compare() {
 
       {/* --- SAVED COMPARISONS LOG --- */}
       {savedComparisons.length > 0 && (
-        <section className={styles.savedSection} aria-label="Saved comparisons in current session">
+        <section className={styles.savedSection} aria-label="Saved workspace comparisons">
           <div className={styles.savedHeader}>
             <div className={styles.savedTitle}>
               <BookmarkCheck size={18} />
-              Session Comparisons ({savedComparisons.length})
+              Workspace Comparisons ({savedComparisons.length})
             </div>
             <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>
-              Temporary in-page list; cleared when you leave or refresh this page
+              Saved to this workspace and restored when you sign in again
             </span>
           </div>
 

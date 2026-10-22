@@ -70,6 +70,21 @@ def test_registration_adopts_existing_workspaces_and_owner_isolation(auth_client
         workspaces = await auth_client.get("/api/workspaces")
         assert [item["id"] for item in workspaces.json()] == ["ws-existing"]
 
+        comparison_state = {
+            "activeScenarioId": "lighting",
+            "lighting": {"numBulbs": 12, "hoursPerDay": 5, "pricePerKwh": 8.5},
+            "enteredInputIds": ["numBulbs", "hoursPerDay", "pricePerKwh"],
+        }
+        saved_state = await auth_client.put(
+            "/api/comparisons/state",
+            json={"workspace_id": "ws-existing", "state": comparison_state},
+        )
+        assert saved_state.status_code == 200
+        restored_state = await auth_client.get(
+            "/api/comparisons/state?workspace_id=ws-existing"
+        )
+        assert restored_state.json()["state"] == comparison_state
+
         created = await auth_client.post(
             "/api/workspaces/",
             json={"name": "My workspace", "type": "individual", "description": ""},
@@ -102,6 +117,11 @@ def test_registration_adopts_existing_workspaces_and_owner_isolation(auth_client
             json={"email": "first@example.com", "password": "strong-password-1"},
         )
         assert logged_in.status_code == 200
+        assert (
+            await auth_client.get(
+                "/api/comparisons/state?workspace_id=ws-existing"
+            )
+        ).json()["state"] == comparison_state
         assert {
             item["id"] for item in (await auth_client.get("/api/workspaces")).json()
         } == {"ws-existing", created_workspace_id}
@@ -121,6 +141,11 @@ def test_registration_adopts_existing_workspaces_and_owner_isolation(auth_client
             )
             assert second.status_code == 201
             assert (await second_client.get("/api/workspaces")).json() == []
+            assert (
+                await second_client.get(
+                    "/api/comparisons/state?workspace_id=ws-existing"
+                )
+            ).status_code == 404
             assert (await second_client.get(f"/api/workspaces/{created_workspace_id}")).status_code == 404
             assert (
                 await second_client.get(

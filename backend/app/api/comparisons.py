@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -15,6 +16,7 @@ from app.core.workspace_access import require_live_workspace
 from app.core.factors import electricity_emissions_kg
 from app.db.database import get_db
 from app.models.comparison import SavedComparison
+from app.models.comparison_state import WorkspaceComparisonState
 
 router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
@@ -25,6 +27,43 @@ class ComparisonInput(BaseModel):
     workspace_id: Optional[str] = None
     save: bool = False
     title: str = ""
+
+
+class ComparisonStateInput(BaseModel):
+    workspace_id: str
+    state: Dict[str, Any]
+
+
+@router.get("/state")
+def get_comparison_state(workspace_id: str = Query(...), db: Session = Depends(get_db)):
+    require_live_workspace(db, workspace_id)
+    saved_state = (
+        db.query(WorkspaceComparisonState)
+        .filter(WorkspaceComparisonState.workspace_id == workspace_id)
+        .first()
+    )
+    return {"state": json.loads(saved_state.state_json) if saved_state else None}
+
+
+@router.put("/state")
+def save_comparison_state(payload: ComparisonStateInput, db: Session = Depends(get_db)):
+    require_live_workspace(db, payload.workspace_id)
+    saved_state = (
+        db.query(WorkspaceComparisonState)
+        .filter(WorkspaceComparisonState.workspace_id == payload.workspace_id)
+        .first()
+    )
+    if saved_state is None:
+        saved_state = WorkspaceComparisonState(
+            id=f"cmpstate-{uuid.uuid4().hex}",
+            workspace_id=payload.workspace_id,
+            state_json="{}",
+        )
+        db.add(saved_state)
+    saved_state.state_json = json.dumps(payload.state)
+    saved_state.updated_at = datetime.utcnow()
+    db.commit()
+    return {"saved": True, "updated_at": saved_state.updated_at.isoformat()}
 
 
 @router.post("/calculate")

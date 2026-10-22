@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.api.auth import require_authenticated_user
 from app.models import OrgLocation, OrgMembership, ResourceRecord, SavedComparison
+from app.models.comparison_state import WorkspaceComparisonState
 from app.models.workspace import Workspace
 
 router = APIRouter(dependencies=[Depends(require_authenticated_user)])
@@ -124,6 +125,9 @@ def delete_workspace(workspace_id: str, db: Session = Depends(get_db)):
     db.query(SavedComparison).filter(SavedComparison.workspace_id == workspace_id).delete(
         synchronize_session=False,
     )
+    db.query(WorkspaceComparisonState).filter(
+        WorkspaceComparisonState.workspace_id == workspace_id,
+    ).delete(synchronize_session=False)
     db.query(OrgLocation).filter(OrgLocation.workspace_id == workspace_id).delete(
         synchronize_session=False,
     )
