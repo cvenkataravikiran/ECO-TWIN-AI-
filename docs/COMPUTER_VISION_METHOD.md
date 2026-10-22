@@ -20,6 +20,8 @@ Install backend dependencies from `backend` with `pip install -r requirements.tx
 4. The image is processed in memory by the configured EcoPath.AI backend and is not written to disk or retained. The assessment stores detections, confidence values, bounding boxes, review state, and model metadata, but not the image bytes or original filename.
 5. Never upload sensitive documents or photos of people without their consent.
 
+Selecting **Take a photo** opens a live browser camera preview, preferring the rear camera when available. Live camera access requires browser permission and a secure page (HTTPS or localhost); if live access is unavailable, the device camera or photo picker remains available as a fallback. The camera stream stops when the capture dialog closes. A captured image follows the same validation and processing path as a selected image.
+
 ## Detection and confidence
 
 YOLOX-Tiny runs locally on CPU. The default threshold is 0.35 (`CV_CONFIDENCE_THRESHOLD`). Overlapping detections are filtered with non-maximum suppression. The displayed confidence is the model's object-detection score (`objectness × highest class score`); it is not a calibrated probability and does not represent confidence in any sustainability claim.

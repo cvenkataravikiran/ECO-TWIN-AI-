@@ -127,9 +127,15 @@ export default function EcoScorer() {
   const [showMethodology, setShowMethodology] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState('');
   const [fileInputKey, setFileInputKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -154,6 +160,58 @@ export default function EcoScorer() {
     if (!previewUrl) return;
     return () => URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
+
+  useEffect(() => {
+    if (!cameraOpen) return;
+
+    let cancelled = false;
+    const startCamera = async () => {
+      setCameraStarting(true);
+      setCameraError('');
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError('Live camera access requires HTTPS (or localhost) and a supported browser. Use the device camera or choose a photo instead.');
+        setCameraStarting(false);
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: { ideal: 'environment' } },
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        cameraStreamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+          setCameraReady(true);
+        }
+      } catch (cameraStartError) {
+        if (cancelled) return;
+        if (cameraStartError instanceof DOMException && cameraStartError.name === 'NotAllowedError') {
+          setCameraError('Camera access was denied. Allow camera access in your browser or device settings, or use the device camera or choose a photo instead.');
+        } else if (cameraStartError instanceof DOMException && cameraStartError.name === 'NotFoundError') {
+          setCameraError('No camera was found on this device. You can choose an existing photo instead.');
+        } else if (cameraStartError instanceof DOMException && cameraStartError.name === 'NotReadableError') {
+          setCameraError('The camera is unavailable or being used by another app. Close other camera apps and try again, or choose a photo.');
+        } else {
+          setCameraError('The camera could not be started. Check browser permissions and try again, or use the device camera or choose a photo instead.');
+        }
+      } finally {
+        if (!cancelled) setCameraStarting(false);
+      }
+    };
+
+    void startCamera();
+    return () => {
+      cancelled = true;
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    };
+  }, [cameraOpen]);
 
   const chooseFile = useCallback((selected: File | undefined) => {
     setError('');
@@ -182,6 +240,37 @@ export default function EcoScorer() {
     setFile(selected);
     setPreviewUrl(URL.createObjectURL(selected));
   }, []);
+
+  const capturePhoto = async () => {
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+      setCameraError('The camera is not ready yet. Wait for the preview, then try again.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      setCameraError('This browser could not capture the camera image. Use the device camera or choose a photo instead.');
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const image = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+    if (!image) {
+      setCameraError('The camera image could not be created. Please try again.');
+      return;
+    }
+
+    const capturedAt = Date.now();
+    chooseFile(new File([image], `ecotwin-photo-${capturedAt}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: capturedAt,
+    }));
+    setCameraOpen(false);
+  };
 
   const reset = () => {
     setFile(null);
@@ -400,7 +489,12 @@ export default function EcoScorer() {
               accept={SUPPORTED_TYPES.join(',')}
               capture="environment"
               className={styles.hiddenInput}
-              onChange={(event) => chooseFile(event.target.files?.[0])}
+              onChange={(event) => {
+                const selected = event.target.files?.[0];
+                chooseFile(selected);
+                if (selected) setCameraOpen(false);
+                event.target.value = '';
+              }}
             />
             <div className={styles.dropIcon}><Camera size={40} strokeWidth={1.5} /></div>
             <div className={styles.dropTitle}>Drop a photo here or choose an image</div>
@@ -409,7 +503,14 @@ export default function EcoScorer() {
           </div>
 
           <div className={styles.uploadActions}>
-            <button className={styles.secondaryButton} type="button" onClick={() => cameraInputRef.current?.click()}>
+            <button
+              className={styles.secondaryButton}
+              type="button"
+              onClick={() => {
+                setCameraReady(false);
+                setCameraOpen(true);
+              }}
+            >
               <Camera size={16} /> Take a photo
             </button>
           </div>
@@ -439,6 +540,49 @@ export default function EcoScorer() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {cameraOpen && (
+        <div className={styles.cameraOverlay}>
+          <section className={styles.cameraDialog} role="dialog" aria-modal="true" aria-labelledby="camera-dialog-title">
+            <div className={styles.cameraHeader}>
+              <h2 id="camera-dialog-title" className={styles.cameraTitle}>Take a photo</h2>
+              <button
+                className={styles.resetBtn}
+                type="button"
+                onClick={() => setCameraOpen(false)}
+                aria-label="Close camera"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <video
+              ref={videoRef}
+              className={styles.cameraPreview}
+              autoPlay
+              playsInline
+              muted
+              aria-label="Live camera preview"
+            />
+            {cameraStarting && (
+              <div className={styles.cameraMessage} role="status">Starting camera… Allow camera access if your browser asks.</div>
+            )}
+            {cameraError && <ErrorMessage>{cameraError}</ErrorMessage>}
+            <div className={styles.cameraActions}>
+              <button className={styles.secondaryButton} type="button" onClick={() => cameraInputRef.current?.click()}>
+                <Upload size={16} /> Use device camera or choose a photo
+              </button>
+              <button
+                className={styles.analyseBtn}
+                type="button"
+                onClick={() => void capturePhoto()}
+                disabled={cameraStarting || !cameraReady}
+              >
+                <Camera size={16} /> Capture photo
+              </button>
+            </div>
+          </section>
         </div>
       )}
 
