@@ -32,6 +32,7 @@ import {
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { getResources, getActions, getRecommendations, getEcoScorerStatus } from '@/services/api';
 import { formatINR } from '@/utils/currency';
+import { getGreeting } from '@/utils/greeting';
 import type { ResourceRecord, Recommendation, Action, KnowledgeCategory, ResourceCategory } from '@/types';
 import styles from './Dashboard.module.css';
 
@@ -47,14 +48,6 @@ const resourceLabels: Record<ResourceCategory, string> = {
 };
 
 const trendColors = ['#1f6349', '#2684a5', '#bd7a18', '#8556a6', '#c35454', '#5f7b38', '#4d657f', '#aa6a45'];
-
-/* Time-aware greeting helper */
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning, welcome back';
-  if (hour < 18) return 'Good afternoon, welcome back';
-  return 'Good evening, welcome back';
-}
 
 export default function Dashboard() {
   const { currentWorkspace, workspacesLoading, workspacesError } = useWorkspace();

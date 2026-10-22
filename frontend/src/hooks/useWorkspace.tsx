@@ -1,6 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Workspace } from '@/types';
 import { createWorkspace as createWorkspaceRequest, deleteWorkspace as deleteWorkspaceRequest, getWorkspaces } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
+
+const ACTIVE_WORKSPACE_STORAGE_PREFIX = 'ecopath.activeWorkspaceId';
+const LEGACY_WORKSPACE_STORAGE_KEY = 'ecopath.activeWorkspaceId';
 
 interface WorkspaceContextType {
   currentWorkspace: Workspace;
@@ -24,13 +28,26 @@ const emptyWorkspace: Workspace = {
 const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentId, setCurrentId] = useState('');
   const [workspacesLoading, setWorkspacesLoading] = useState(true);
   const [workspacesError, setWorkspacesError] = useState<string | null>(null);
   const isMounted = useRef(true);
 
-  const reloadWorkspaces = useCallback(async () => {
+  useEffect(() => {
+    if (!user) return;
+    const storageKey = `${ACTIVE_WORKSPACE_STORAGE_PREFIX}:${user.id}`;
+    if (currentId) window.localStorage.setItem(storageKey, currentId);
+  }, [currentId, user]);
+
+  const reloadWorkspaces = useCallback(async (preferredWorkspaceId?: string) => {
+    if (!user) {
+      setWorkspaces([]);
+      setCurrentId('');
+      setWorkspacesLoading(false);
+      return;
+    }
     setWorkspacesLoading(true);
     setWorkspacesError(null);
     try {
@@ -38,7 +55,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (isMounted.current) {
         setWorkspaces(items);
         if (items.length > 0) {
-          setCurrentId((prev) => (items.some((w) => w.id === prev) ? prev : items[0].id));
+          setCurrentId((current) => {
+            const preferredId = preferredWorkspaceId || current;
+            return items.some((workspace) => workspace.id === preferredId)
+              ? preferredId
+              : items[0].id;
+          });
         } else {
           setCurrentId('');
         }
@@ -53,20 +75,38 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     } finally {
       if (isMounted.current) setWorkspacesLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     isMounted.current = true;
+    if (!user) {
+      setWorkspaces([]);
+      setCurrentId('');
+      setWorkspacesLoading(false);
+      return () => {
+        isMounted.current = false;
+      };
+    }
+    const storageKey = `${ACTIVE_WORKSPACE_STORAGE_PREFIX}:${user.id}`;
+    const storedWorkspaceId =
+      window.localStorage.getItem(storageKey) ??
+      window.localStorage.getItem(LEGACY_WORKSPACE_STORAGE_KEY) ??
+      '';
+    if (storedWorkspaceId) {
+      window.localStorage.removeItem(LEGACY_WORKSPACE_STORAGE_KEY);
+    }
+    setCurrentId(storedWorkspaceId);
     const initialLoad = window.setTimeout(() => {
-      void reloadWorkspaces();
+      void reloadWorkspaces(storedWorkspaceId);
     }, 0);
     return () => {
       window.clearTimeout(initialLoad);
       isMounted.current = false;
     };
-  }, [reloadWorkspaces]);
+  }, [reloadWorkspaces, user]);
 
   const currentWorkspace = workspaces.find((w) => w.id === currentId) ?? workspaces[0] ?? emptyWorkspace;
+  const selectWorkspace = (id: string) => setCurrentId(id);
 
   const createWorkspace = async (payload: Pick<Workspace, 'name' | 'type' | 'description'>) => {
     const workspace = await createWorkspaceRequest(payload);
@@ -90,7 +130,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     workspacesLoading,
     workspacesError,
     reloadWorkspaces,
-    switchWorkspace: setCurrentId,
+    switchWorkspace: selectWorkspace,
     createWorkspace,
     deleteWorkspace,
   };

@@ -45,6 +45,7 @@ class Settings:
     cors_origins: List[str] = _load_cors_origins()
 
     secret_key: str = os.getenv("SECRET_KEY", "CHANGE-THIS-IN-PRODUCTION")
+    session_cookie_secure: bool = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
     api_token: str = os.getenv("API_TOKEN", "")
     require_workspace_id: bool = os.getenv("REQUIRE_WORKSPACE_ID", "true").lower() == "true"
 

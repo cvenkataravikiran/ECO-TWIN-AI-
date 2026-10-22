@@ -9,6 +9,7 @@ from app.models.eco_assessment import EcoAssessment, VisualObservation
 from app.models.recommendation_rule import RecommendationRule
 from app.models.comparison import SavedComparison
 from app.models.org import OrgLocation, OrgMembership
+from app.models.user import User, UserSession
 
 __all__ = [
     "Workspace",
@@ -21,4 +22,6 @@ __all__ = [
     "SavedComparison",
     "OrgLocation",
     "OrgMembership",
+    "User",
+    "UserSession",
 ]

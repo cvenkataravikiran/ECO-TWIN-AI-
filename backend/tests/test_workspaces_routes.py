@@ -54,5 +54,4 @@ def test_repeated_slashes_reach_workspace_list_without_redirect():
         else:
             app.dependency_overrides[get_db] = previous_override
 
-    assert response.status_code == 200
-    assert response.json() == []
+    assert response.status_code == 401

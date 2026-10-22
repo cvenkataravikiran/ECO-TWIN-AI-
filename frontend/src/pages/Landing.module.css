@@ -86,6 +86,17 @@
   transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
+.navLinkPrimary {
+  border-color: var(--landing-green);
+  background: var(--landing-green);
+  color: white;
+}
+
+.navLinkPrimary:hover {
+  background: #123c2d;
+  color: white;
+}
+
 .navLink:hover {
   border-color: var(--landing-green);
   background: #fff;
@@ -174,6 +185,8 @@
   color: white;
   font-size: 13px;
   font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
   text-decoration: none;
   box-shadow: 0 10px 24px rgba(23, 74, 54, 0.22);
   transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
@@ -184,6 +197,11 @@
   background: #103a2a;
   color: white;
   box-shadow: 0 14px 28px rgba(23, 74, 54, 0.28);
+}
+
+.navLink:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .heroFootnote {
@@ -578,6 +596,7 @@
   font-weight: 600;
   box-shadow: 0 10px 22px rgba(25, 77, 55, 0.18);
   transition: background 160ms ease, transform 160ms ease;
+  text-decoration: none;
 }
 
 .createButton:hover:not(:disabled) {
@@ -587,6 +606,30 @@
 .createButton:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+.publicStart {
+  display: grid;
+  gap: 13px;
+}
+
+.publicStart p {
+  margin: 0 0 5px;
+  color: #657168;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.secondaryCta {
+  justify-self: center;
+  color: #285a40;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.secondaryCta:hover {
+  text-decoration: underline;
 }
 
 .formError {

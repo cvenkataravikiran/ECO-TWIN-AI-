@@ -10,10 +10,11 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, field_validator
 
 from app.db.database import get_db
+from app.api.auth import require_authenticated_user
 from app.core.workspace_access import require_live_workspace
 from app.models.action_plan import Action
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
 
 class ActionCreate(BaseModel):

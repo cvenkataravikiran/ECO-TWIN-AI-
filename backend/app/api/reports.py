@@ -10,11 +10,12 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.workspace_access import require_live_workspace
+from app.api.auth import require_authenticated_user
 from app.db.database import get_db
 from app.models.action_plan import Action
 from app.models.resource_record import ResourceRecord
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
 
 def _parse_report_date(value: str, field_name: str) -> date | None:

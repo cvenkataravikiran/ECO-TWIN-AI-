@@ -12,6 +12,9 @@
 - Pydantic validation on all API inputs
 - SQL injection prevention through SQLAlchemy ORM (parameterized queries)
 - CORS restricted to configured origins
+- Email/password accounts use salted PBKDF2 password hashes; raw passwords are not stored
+- Authenticated APIs use opaque, server-side sessions in HTTP-only, SameSite cookies
+- Workspace records are owner-scoped; the first account on an existing installation adopts unowned workspaces
 - File upload validation (type, size) for Eco-Scorer
 - No permanent image storage by default
 
@@ -19,6 +22,8 @@
 - SQLite for development (single-file, no network exposure)
 - PostgreSQL recommended for production with proper authentication
 - SECRET_KEY must be changed from default in production
+- SESSION_COOKIE_SECURE=true when HTTPS is enabled
+- Persistent account sessions expire after 30 days and are revoked on logout
 - Environment variables for sensitive configuration
 
 ### Computer Vision

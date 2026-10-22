@@ -14,13 +14,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.measured_resources import latest_measured_monthly_electricity
+from app.api.auth import require_authenticated_user
 from app.core.workspace_access import require_live_workspace
 from app.db.database import get_db
 from app.models.resource_record import ResourceRecord
 from app.models.knowledge_article import KnowledgeArticle
 from app.recommendation_engine.engine import UserContext, generate_recommendations, ACTIVE_RULES
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
 
 class RecommendationRequest(BaseModel):

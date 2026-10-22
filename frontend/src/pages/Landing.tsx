@@ -12,12 +12,15 @@ import {
   ShieldCheck,
   Sparkles,
   Zap,
+  LogOut,
 } from 'lucide-react';
 import { useWorkspace } from '@/hooks/useWorkspace';
+import { useAuth } from '@/hooks/useAuth';
 import styles from './Landing.module.css';
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const {
     workspaces,
     workspacesLoading,
@@ -25,11 +28,14 @@ export default function Landing() {
     reloadWorkspaces,
     switchWorkspace,
     createWorkspace,
+    currentWorkspace,
   } = useWorkspace();
   const [workspaceName, setWorkspaceName] = useState('');
   const [workspaceType, setWorkspaceType] = useState<'individual' | 'business'>('individual');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
 
   const handleCreateWorkspace = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -54,6 +60,19 @@ export default function Landing() {
     navigate('/dashboard');
   };
 
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    setLogoutError('');
+    try {
+      await signOut();
+      navigate('/', { replace: true });
+    } catch (error) {
+      setLogoutError(error instanceof Error ? error.message : 'Could not log out.');
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   return (
     <main className={styles.landing}>
       <header className={styles.navbar}>
@@ -62,11 +81,28 @@ export default function Landing() {
           <span>EcoPath<span className={styles.brandAccent}>.AI</span></span>
         </Link>
         <div className={styles.navActions}>
-          <span className={styles.navNote}><ShieldCheck size={14} /> Your data. Your workspace.</span>
-          {workspaces.length > 0 && (
-            <button className={styles.navLink} type="button" onClick={() => navigate('/dashboard')}>
-              Open dashboard <ArrowUpRight size={15} />
-            </button>
+          {!user ? (
+            <>
+              <span className={styles.navNote}><ShieldCheck size={14} /> Your data. Your workspace.</span>
+              <Link className={styles.navLink} to="/login">Log in</Link>
+              <Link className={`${styles.navLink} ${styles.navLinkPrimary}`} to="/signup">Create account</Link>
+            </>
+          ) : (
+            <>
+              <span className={styles.navNote}><ShieldCheck size={14} /> {user.email}</span>
+              {workspaces.length > 0 && (
+                <button
+                  className={styles.navLink}
+                  type="button"
+                  onClick={() => handleOpenWorkspace(currentWorkspace.id || workspaces[0].id)}
+                >
+                  Open dashboard <ArrowUpRight size={15} />
+                </button>
+              )}
+              <button className={styles.navLink} type="button" onClick={() => void handleLogout()} disabled={loggingOut}>
+                <LogOut size={14} /> {loggingOut ? 'Logging out…' : 'Log out'}
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -79,10 +115,28 @@ export default function Landing() {
             Understand the resources you use, compare everyday alternatives, and turn what you learn into a plan you can actually follow.
           </p>
           <div className={styles.heroActions}>
-            <a className={styles.primaryCta} href="#get-started">
-              Build your workspace <ArrowRight size={17} />
-            </a>
-            <span className={styles.heroFootnote}>A useful first step, not another perfect-score promise.</span>
+            {user ? (
+              workspaces.length > 0 ? (
+                <button
+                  className={styles.primaryCta}
+                  type="button"
+                  onClick={() => handleOpenWorkspace(currentWorkspace.id || workspaces[0].id)}
+                >
+                  Open your workspace <ArrowRight size={17} />
+                </button>
+              ) : (
+                <a className={styles.primaryCta} href="#get-started">
+                  Create your workspace <ArrowRight size={17} />
+                </a>
+              )
+            ) : (
+              <Link className={styles.primaryCta} to="/signup">
+                Create your account <ArrowRight size={17} />
+              </Link>
+            )}
+            <span className={styles.heroFootnote}>
+              {user ? 'Your workspaces and saved records stay with your account.' : 'A useful first step, not another perfect-score promise.'}
+            </span>
           </div>
           <div className={styles.trustRow}>
             <span><Check size={14} /> Start with your own records</span>
@@ -150,80 +204,99 @@ export default function Landing() {
 
       <section className={styles.startSection} id="get-started">
         <div className={styles.startCopy}>
-          <span className={styles.sectionEyebrow}>Your first step</span>
-          <h2>Give your sustainability work a place to grow.</h2>
-          <p>
-            Create a personal or business workspace. You can add more later, switch between them, or remove one when you no longer need it.
+          <span className={styles.sectionEyebrow}>{user ? 'Your workspace' : 'Your first step'}</span>
+          <h2>{user ? 'Pick up where you left off.' : 'Give your sustainability work a place to grow.'}</h2>
+          <p>{user
+            ? 'Your workspaces and saved records are private to your account. Open one to continue, or create another for a different context.'
+            : 'Create an account first, then set up a personal or business workspace. Your records will be saved privately to your account.'}
           </p>
           <div className={styles.workspaceNote}>
             <ShieldCheck size={17} />
-            <span>Workspaces keep your resource records and plans organized by context.</span>
+            <span>{user
+              ? `Signed in as ${user.email}. Your workspace data is saved for your next visit.`
+              : 'Your account keeps your resource records and plans private and available when you return.'}
+            </span>
           </div>
         </div>
         <div className={styles.workspacePanel}>
           <div className={styles.panelHeading}>
             <div>
-              <span className={styles.panelEyebrow}>CREATE A WORKSPACE</span>
-              <h3>Where would you like to begin?</h3>
+              <span className={styles.panelEyebrow}>{user ? 'YOUR WORKSPACES' : 'GET STARTED'}</span>
+              <h3>{user ? 'Where would you like to begin?' : 'Your account comes first.'}</h3>
             </div>
-            <span className={styles.panelIcon}><Plus size={18} /></span>
+            <span className={styles.panelIcon}>{user ? <Plus size={18} /> : <ShieldCheck size={18} />}</span>
           </div>
-          <form className={styles.createForm} onSubmit={(event) => void handleCreateWorkspace(event)}>
-            <label htmlFor="landing-workspace-name">Workspace name</label>
-            <input
-              id="landing-workspace-name"
-              value={workspaceName}
-              onChange={(event) => setWorkspaceName(event.target.value)}
-              placeholder="e.g. My household"
-              maxLength={128}
-              required
-            />
-            <label htmlFor="landing-workspace-type">Workspace type</label>
-            <select
-              id="landing-workspace-type"
-              value={workspaceType}
-              onChange={(event) => setWorkspaceType(event.target.value as 'individual' | 'business')}
-            >
-              <option value="individual">Personal</option>
-              <option value="business">Business</option>
-            </select>
-            {createError && <p className={styles.formError} role="alert">{createError}</p>}
-            {workspacesError && (
-              <div className={styles.formError} role="alert">
-                Workspace connection unavailable. {workspacesError}
-                <button type="button" onClick={() => void reloadWorkspaces()}>Retry</button>
-              </div>
-            )}
-            <button className={styles.createButton} type="submit" disabled={creating || workspacesLoading || Boolean(workspacesError)}>
-              {creating ? 'Creating workspace…' : 'Create workspace and continue'}
-              {!creating && <ArrowRight size={16} />}
-            </button>
-          </form>
-
-          {(workspacesLoading || workspaces.length > 0) && (
-            <div className={styles.existingWorkspaces}>
-              <div className={styles.existingHeading}>
-                <span>Already have a workspace?</span>
-                {workspacesLoading && <span className={styles.loadingText}>Loading…</span>}
-              </div>
-              {workspaces.map((workspace) => (
-                <button
-                  className={styles.existingWorkspace}
-                  key={workspace.id}
-                  type="button"
-                  onClick={() => handleOpenWorkspace(workspace.id)}
-                >
-                  <span className={styles.existingIcon}>
-                    <Building2 size={16} />
-                  </span>
-                  <span className={styles.existingDetails}>
-                    <strong>{workspace.name}</strong>
-                    <small>{workspace.type === 'business' ? 'Business' : 'Personal'} workspace</small>
-                  </span>
-                  <ArrowRight size={16} />
-                </button>
-              ))}
+          {!user ? (
+            <div className={styles.publicStart}>
+              <p>Create an account or log in to access your private workspaces and saved sustainability data.</p>
+              <Link className={styles.createButton} to="/signup">
+                Create an account <ArrowRight size={16} />
+              </Link>
+              <Link className={styles.secondaryCta} to="/login">
+                Already have an account? Log in
+              </Link>
             </div>
+          ) : (
+            <>
+              <form className={styles.createForm} onSubmit={(event) => void handleCreateWorkspace(event)}>
+                <label htmlFor="landing-workspace-name">Workspace name</label>
+                <input
+                  id="landing-workspace-name"
+                  value={workspaceName}
+                  onChange={(event) => setWorkspaceName(event.target.value)}
+                  placeholder="e.g. My household"
+                  maxLength={128}
+                  required
+                />
+                <label htmlFor="landing-workspace-type">Workspace type</label>
+                <select
+                  id="landing-workspace-type"
+                  value={workspaceType}
+                  onChange={(event) => setWorkspaceType(event.target.value as 'individual' | 'business')}
+                >
+                  <option value="individual">Personal</option>
+                  <option value="business">Business</option>
+                </select>
+                {createError && <p className={styles.formError} role="alert">{createError}</p>}
+                {workspacesError && (
+                  <div className={styles.formError} role="alert">
+                    Workspace connection unavailable. {workspacesError}
+                    <button type="button" onClick={() => void reloadWorkspaces()}>Retry</button>
+                  </div>
+                )}
+                <button className={styles.createButton} type="submit" disabled={creating || workspacesLoading || Boolean(workspacesError)}>
+                  {creating ? 'Creating workspace…' : 'Create workspace and continue'}
+                  {!creating && <ArrowRight size={16} />}
+                </button>
+              </form>
+
+              {(workspacesLoading || workspaces.length > 0) && (
+                <div className={styles.existingWorkspaces}>
+                  <div className={styles.existingHeading}>
+                    <span>Already have a workspace?</span>
+                    {workspacesLoading && <span className={styles.loadingText}>Loading…</span>}
+                  </div>
+                  {workspaces.map((workspace) => (
+                    <button
+                      className={styles.existingWorkspace}
+                      key={workspace.id}
+                      type="button"
+                      onClick={() => handleOpenWorkspace(workspace.id)}
+                    >
+                      <span className={styles.existingIcon}>
+                        <Building2 size={16} />
+                      </span>
+                      <span className={styles.existingDetails}>
+                        <strong>{workspace.name}</strong>
+                        <small>{workspace.type === 'business' ? 'Business' : 'Personal'} workspace</small>
+                      </span>
+                      <ArrowRight size={16} />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {logoutError && <p className={styles.formError} role="alert">{logoutError}</p>}
+            </>
           )}
         </div>
       </section>

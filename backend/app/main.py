@@ -44,6 +44,7 @@ app.add_middleware(NormalizeApiPathMiddleware)
 # Include routers
 from app.api import (
     actions,
+    auth,
     comparisons,
     eco_scorer,
     health,
@@ -55,6 +56,7 @@ from app.api import (
     workspaces,
 )
 
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(workspaces.router, prefix="/api/workspaces", tags=["Workspaces"])
 app.include_router(resources.router, prefix="/api/resources", tags=["Resources"])

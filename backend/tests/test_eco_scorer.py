@@ -125,6 +125,7 @@ def db_session():
 @pytest.fixture
 def scorer_client(db_session, monkeypatch):
     from app.api import eco_scorer as scorer_api
+    from app.api.auth import require_authenticated_user
 
     db_session.add(Workspace(id="ws-upload", name="Upload Test", type="individual"))
     db_session.commit()
@@ -139,6 +140,7 @@ def scorer_client(db_session, monkeypatch):
             return []
 
     app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[require_authenticated_user] = lambda: "test-user"
     monkeypatch.setattr(scorer_api, "_runtime_status", lambda _db: {"operational": True})
     monkeypatch.setattr(scorer_api, "_get_detector", lambda: EmptyDetector())
 

@@ -10,12 +10,13 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.calculations.energy import estimate_led_savings
+from app.api.auth import require_authenticated_user
 from app.core.workspace_access import require_live_workspace
 from app.core.factors import electricity_emissions_kg
 from app.db.database import get_db
 from app.models.comparison import SavedComparison
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
 
 class ComparisonInput(BaseModel):

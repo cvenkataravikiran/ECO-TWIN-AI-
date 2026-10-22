@@ -14,10 +14,12 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, field_validator
 
 from app.db.database import get_db
+from app.api.auth import require_authenticated_user
+from app.core.workspace_access import require_live_workspace
 from app.models.resource_record import ResourceRecord
 from app.models.workspace import Workspace
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
 
 # ---------- Schemas ----------
@@ -80,10 +82,7 @@ class ResourceRecordUpdate(BaseModel):
 # ---------- Endpoints ----------
 
 def _require_live_workspace(db: Session, workspace_id: str) -> Workspace:
-    workspace = db.get(Workspace, workspace_id)
-    if not workspace or workspace.is_demo:
-        raise HTTPException(status_code=404, detail="Live workspace not found")
-    return workspace
+    return require_live_workspace(db, workspace_id)
 
 @router.get("/")
 def list_resources(

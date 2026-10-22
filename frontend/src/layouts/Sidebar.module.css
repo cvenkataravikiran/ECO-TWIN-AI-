@@ -356,6 +356,29 @@
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.logoutButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(240, 246, 240, 0.82);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.logoutButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-inverse);
+}
+
 .sampleBadge {
   display: inline-flex;
   align-items: center;

@@ -38,12 +38,18 @@ The model is not committed to the repository. Without the weights and inference 
 ### 2. Initialize Database
 
 The backend creates database tables when it starts and does not seed demo workspaces or resource
-records. The landing page lets you create a personal or business workspace or open an existing one.
-You can switch, create, or delete workspaces from the sidebar. Deleting a workspace permanently
+records. Create an account or sign in with your email and password, then create a personal or business
+workspace. The first account created on an existing installation adopts its existing live workspaces;
+later accounts cannot see or access those workspaces. Workspaces and application records are scoped
+to the signed-in account. You can switch, create, or delete your workspaces from the sidebar. Deleting a workspace permanently
 deletes its associated resource records, actions, comparisons, organization data, and Eco-Scorer
 assessments after confirmation. Existing database contents are not otherwise deleted. Legacy demo
 workspaces and their records are preserved in the database but are hidden from the workspace UI and
-rejected by live workspace APIs. Currency and date display are configured for India (INR and `en-IN`).
+rejected by live workspace APIs. Logging out revokes the current persistent session without deleting
+data; signing in again restores the account's saved workspaces and records. Sessions expire after 30
+days. Set `SESSION_COOKIE_SECURE=true` when serving the application over HTTPS. Dashboard greetings
+follow India time without displaying a timezone label. Currency and date display are configured for
+India (INR and `en-IN`).
 
 Demo fixtures are not part of the live startup path. `scripts/seed_demo_data.py` is only for a
 disposable presentation database and requires the explicit `ECOTWIN_ALLOW_DEMO_SEED=1` opt-in.
@@ -137,6 +143,10 @@ ecopath-ai/
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/api/health` | Health check |
+| POST | `/api/auth/register` | Create an account and persistent session |
+| POST | `/api/auth/login` | Sign in and create a persistent session |
+| GET | `/api/auth/me` | Restore the signed-in account |
+| POST | `/api/auth/logout` | Revoke the current session |
 | GET/POST | `/api/workspaces/` | List or create workspaces |
 | GET/PUT/DELETE | `/api/workspaces/{id}` | Read, update, or delete a workspace and its associated data |
 | GET/POST/PUT/DELETE | `/api/resources/` | Resource CRUD |
@@ -169,6 +179,7 @@ Copy `.env.example` and adjust:
 |----------|---------|-------------|
 | `DATABASE_URL` | `sqlite:///data/ecotwin.db` | Database connection |
 | `CORS_ORIGINS` | `http://localhost:5173` | Allowed frontend origins |
+| `SESSION_COOKIE_SECURE` | `false` | Set `true` when using HTTPS |
 | `DEBUG` | `true` | Enable SQL logging |
 | `CV_MODEL_PATH` | `computer_vision/models/yolox_tiny.onnx` | CV model location |
 | `CV_CONFIDENCE_THRESHOLD` | `0.35` | Object-detection threshold (not sustainability confidence) |

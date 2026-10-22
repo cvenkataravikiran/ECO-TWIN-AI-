@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.measured_resources import latest_measured_monthly_electricity
 from app.core.workspace_access import require_live_workspace
+from app.api.auth import require_authenticated_user
 from app.db.database import get_db
 from app.models.action_plan import Action
 from app.models.eco_assessment import EcoAssessment, VisualObservation
@@ -29,7 +30,7 @@ _ROOT = Path(__file__).resolve().parents[3]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
 
 def _rules_and_score():

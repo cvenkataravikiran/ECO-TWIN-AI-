@@ -19,9 +19,11 @@ import {
   X,
   RefreshCw,
   Trash2,
+  LogOut,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkspace } from '@/hooks/useWorkspace';
+import { useAuth } from '@/hooks/useAuth';
 import { getEcoScorerStatus } from '@/services/api';
 import styles from './Sidebar.module.css';
 
@@ -64,6 +66,7 @@ const navSections = [
 
 export function Sidebar() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const {
     currentWorkspace,
     workspaces,
@@ -84,6 +87,8 @@ export function Sidebar() {
   const [workspaceSaving, setWorkspaceSaving] = useState(false);
   const [deletingWorkspaceId, setDeletingWorkspaceId] = useState('');
   const [workspaceDeleteError, setWorkspaceDeleteError] = useState('');
+  const [logoutError, setLogoutError] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
   const workspaceLabel = workspacesLoading
     ? 'Loading workspaces…'
     : workspacesError
@@ -117,6 +122,21 @@ export function Sidebar() {
   const handleSwitch = (id: string) => {
     switchWorkspace(id);
     setWsDropdownOpen(false);
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    setLogoutError('');
+    try {
+      await signOut();
+      setWsDropdownOpen(false);
+      setMobileOpen(false);
+      navigate('/login', { replace: true });
+    } catch (error) {
+      setLogoutError(error instanceof Error ? error.message : 'Could not log out.');
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const handleCreateWorkspace = async (event: FormEvent<HTMLFormElement>) => {
@@ -332,6 +352,11 @@ export function Sidebar() {
 
         {/* Footer */}
         <div className={styles.sidebarFooter}>
+          <button type="button" className={styles.logoutButton} onClick={handleLogout}>
+            <LogOut size={15} />
+            {loggingOut ? 'Logging out…' : 'Log out'}
+          </button>
+          {logoutError && <p className={styles.workspaceCreateError} role="alert">{logoutError}</p>}
           <div className={styles.sampleBadge}>
             <Leaf size={10} />
             Data-led • Source-backed

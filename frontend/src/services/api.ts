@@ -7,6 +7,43 @@ import type { ResourceRecord, Action, Recommendation, ImpactEntry, Workspace, Kn
 
 // const BASE_URL = 'http://localhost:8000/api';
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api').replace(/\/+$/, '');
+
+function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  return fetch(input, { ...init, credentials: 'include' });
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+}
+
+export async function getSessionUser(): Promise<AuthUser | null> {
+  const response = await apiFetch(`${BASE_URL}/auth/me`);
+  if (response.status === 401) return null;
+  return handleResponse<AuthUser>(response);
+}
+
+export async function registerAccount(email: string, password: string): Promise<AuthUser> {
+  return handleResponse<AuthUser>(await apiFetch(`${BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  }));
+}
+
+export async function loginAccount(email: string, password: string): Promise<AuthUser> {
+  return handleResponse<AuthUser>(await apiFetch(`${BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  }));
+}
+
+export async function logoutAccount(): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/auth/logout`, { method: 'POST' });
+  if (!response.ok) await handleResponse(response);
+}
+
 /** Helper to handle HTTP responses */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -50,7 +87,7 @@ export async function getKnowledgeArticles(
   size = 3,
 ): Promise<KnowledgeArticleSummary[]> {
   const query = new URLSearchParams({ category, size: String(size) });
-  const response = await fetch(`${BASE_URL}/knowledge/?${query.toString()}`);
+  const response = await apiFetch(`${BASE_URL}/knowledge/?${query.toString()}`);
   const data = await handleResponse<{ items: KnowledgeArticleSummary[] }>(response);
   return data.items;
 }
@@ -122,7 +159,7 @@ export interface EcoScorerAnalysis {
 }
 
 export async function getEcoScorerStatus(): Promise<EcoScorerStatus> {
-  return handleResponse<EcoScorerStatus>(await fetch(`${BASE_URL}/eco-scorer/status`));
+  return handleResponse<EcoScorerStatus>(await apiFetch(`${BASE_URL}/eco-scorer/status`));
 }
 
 export async function analyseEcoScorerImage(
@@ -130,7 +167,7 @@ export async function analyseEcoScorerImage(
   file: File,
 ): Promise<EcoScorerAnalysis> {
   const url = `${BASE_URL}/eco-scorer/analyse?workspace_id=${encodeURIComponent(workspaceId)}`;
-  return handleResponse<EcoScorerAnalysis>(await fetch(url, {
+  return handleResponse<EcoScorerAnalysis>(await apiFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': file.type },
     body: file,
@@ -148,7 +185,7 @@ export async function updateEcoScorerObservation(
   eco_score: EcoScorerAssessment;
   recommendations: EcoScorerRecommendation[];
 }> {
-  const response = await fetch(`${BASE_URL}/eco-scorer/observations/${encodeURIComponent(observationId)}`, {
+  const response = await apiFetch(`${BASE_URL}/eco-scorer/observations/${encodeURIComponent(observationId)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(update),
@@ -160,7 +197,7 @@ export async function saveEcoScorerActions(assessmentId: string): Promise<{
   created_action_ids: string[];
   count: number;
 }> {
-  const response = await fetch(
+  const response = await apiFetch(
     `${BASE_URL}/eco-scorer/assessments/${encodeURIComponent(assessmentId)}/save-actions`,
     { method: 'POST' },
   );
@@ -273,12 +310,12 @@ function normalizeRecommendation(raw: any): Recommendation {
 }
 
 export async function getWorkspaces(): Promise<Workspace[]> {
-  const resp = await fetch(`${BASE_URL}/workspaces`);
+  const resp = await apiFetch(`${BASE_URL}/workspaces`);
   return handleResponse<Workspace[]>(resp);
 }
 
 export async function createWorkspace(payload: Pick<Workspace, 'name' | 'type' | 'description'>): Promise<Workspace> {
-  const response = await fetch(`${BASE_URL}/workspaces/`, {
+  const response = await apiFetch(`${BASE_URL}/workspaces/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -287,7 +324,7 @@ export async function createWorkspace(payload: Pick<Workspace, 'name' | 'type' |
 }
 
 export async function deleteWorkspace(workspaceId: string): Promise<void> {
-  const response = await fetch(`${BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`, {
+  const response = await apiFetch(`${BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`, {
     method: 'DELETE',
   });
   await handleResponse<{ deleted: boolean }>(response);
@@ -297,7 +334,7 @@ export async function updateWorkspace(
   workspaceId: string,
   payload: Pick<Workspace, 'name' | 'description'>,
 ): Promise<Workspace> {
-  const response = await fetch(`${BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`, {
+  const response = await apiFetch(`${BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -306,14 +343,14 @@ export async function updateWorkspace(
 }
 
 export async function getWorkspace(workspaceId: string): Promise<Workspace> {
-  const resp = await fetch(`${BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`);
+  const resp = await apiFetch(`${BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`);
   return handleResponse<Workspace>(resp);
 }
 
 /** Fetch resource records for a given workspace */
 export async function getResources(workspaceId: string): Promise<ResourceRecord[]> {
   const url = `${BASE_URL}/resources?workspace_id=${encodeURIComponent(workspaceId)}`;
-  const resp = await fetch(url);
+  const resp = await apiFetch(url);
   const data = await handleResponse<{ items: ResourceRecord[]; unsupported_currency_count?: number }>(resp);
   if (data.unsupported_currency_count) {
     throw new Error(
@@ -339,7 +376,7 @@ export async function createResource(
     notes: string;
   },
 ): Promise<ResourceRecord> {
-  const response = await fetch(`${BASE_URL}/resources/`, {
+  const response = await apiFetch(`${BASE_URL}/resources/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -351,7 +388,7 @@ export async function updateResource(
   recordId: string,
   payload: Omit<Parameters<typeof createResource>[0], 'workspace_id'>,
 ): Promise<ResourceRecord> {
-  const response = await fetch(`${BASE_URL}/resources/${encodeURIComponent(recordId)}`, {
+  const response = await apiFetch(`${BASE_URL}/resources/${encodeURIComponent(recordId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -360,7 +397,7 @@ export async function updateResource(
 }
 
 export async function deleteResource(recordId: string): Promise<void> {
-  const response = await fetch(`${BASE_URL}/resources/${encodeURIComponent(recordId)}`, { method: 'DELETE' });
+  const response = await apiFetch(`${BASE_URL}/resources/${encodeURIComponent(recordId)}`, { method: 'DELETE' });
   if (response.status === 204) return;
   await handleResponse(response);
 }
@@ -368,7 +405,7 @@ export async function deleteResource(recordId: string): Promise<void> {
 /** Fetch actions for a given workspace */
 export async function getActions(workspaceId: string): Promise<Action[]> {
   const url = `${BASE_URL}/actions?workspace_id=${encodeURIComponent(workspaceId)}`;
-  const resp = await fetch(url);
+  const resp = await apiFetch(url);
   const data = await handleResponse<{ items: any[] }>(resp);
   return data.items.map((item) => normalizeAction(item, workspaceId));
 }
@@ -384,7 +421,7 @@ export async function createAction(payload: {
   initial_estimate_currency: 'INR';
   notes: string;
 }): Promise<Action> {
-  const response = await fetch(`${BASE_URL}/actions/`, {
+  const response = await apiFetch(`${BASE_URL}/actions/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -403,7 +440,7 @@ export async function updateAction(
   },
   workspaceId: string,
 ): Promise<Action> {
-  const response = await fetch(`${BASE_URL}/actions/${encodeURIComponent(actionId)}`, {
+  const response = await apiFetch(`${BASE_URL}/actions/${encodeURIComponent(actionId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -412,7 +449,7 @@ export async function updateAction(
 }
 
 export async function deleteAction(actionId: string): Promise<void> {
-  const response = await fetch(`${BASE_URL}/actions/${encodeURIComponent(actionId)}`, { method: 'DELETE' });
+  const response = await apiFetch(`${BASE_URL}/actions/${encodeURIComponent(actionId)}`, { method: 'DELETE' });
   if (response.status === 204) return;
   await handleResponse(response);
 }
@@ -420,7 +457,7 @@ export async function deleteAction(actionId: string): Promise<void> {
 /** Generate (or fetch) recommendations for a workspace */
 export async function getRecommendations(workspaceId: string): Promise<Recommendation[]> {
   const url = `${BASE_URL}/recommendations/generate`;
-  const resp = await fetch(url, {
+  const resp = await apiFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ workspace_id: workspaceId }),
@@ -432,7 +469,7 @@ export async function getRecommendations(workspaceId: string): Promise<Recommend
 /** Fetch impact entries (ledger) for a workspace */
 export async function getImpactEntries(workspaceId: string): Promise<ImpactEntry[]> {
   const url = `${BASE_URL}/impact?workspace_id=${encodeURIComponent(workspaceId)}`;
-  const resp = await fetch(url);
+  const resp = await apiFetch(url);
   const data = await handleResponse<{ items: any[] }>(resp);
 
   return data.items.map((item) => ({
@@ -467,7 +504,7 @@ export async function downloadSustainabilityReportPdf(
     period_end: periodEnd,
     include_estimates: String(includeEstimates),
   });
-  const response = await fetch(`${BASE_URL}/reports/generate.pdf?${query.toString()}`);
+  const response = await apiFetch(`${BASE_URL}/reports/generate.pdf?${query.toString()}`);
   if (!response.ok) {
     const errorText = await response.text();
     let message = errorText;
@@ -509,7 +546,7 @@ export async function importResourcesCsv(workspaceId: string, file: File): Promi
   const url = `${BASE_URL}/resources/import/csv?workspace_id=${encodeURIComponent(workspaceId)}`;
   const form = new FormData();
   form.append('file', file);
-  const resp = await fetch(url, { method: 'POST', body: form });
+  const resp = await apiFetch(url, { method: 'POST', body: form });
   return handleResponse(resp);
 }
 

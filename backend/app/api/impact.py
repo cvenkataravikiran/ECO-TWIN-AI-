@@ -7,10 +7,11 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.workspace_access import require_live_workspace
+from app.api.auth import require_authenticated_user
 from app.db.database import get_db
 from app.models.action_plan import Action
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
 
 @router.get("/")
