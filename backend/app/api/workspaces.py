@@ -54,6 +54,7 @@ def _to_dict(ws: Workspace) -> dict:
     }
 
 
+@router.get("")
 @router.get("/")
 def list_workspaces(db: Session = Depends(get_db)):
     rows = (
