@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { TrendingUp, CheckCircle, BarChart2, Filter, AlertTriangle } from 'lucide-react';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { getActions, getImpactEntries } from '@/services/api';
+import KnowledgeGuidance from '@/components/KnowledgeGuidance';
 import { formatINR } from '@/utils/currency';
 import type { Action, ImpactEntry } from '@/types';
 import styles from './Impact.module.css';
@@ -229,6 +230,19 @@ export default function Impact() {
             );
           })}
         </div>
+      )}
+
+      {filteredEntries.length > 0 && (
+        <KnowledgeGuidance
+          title="Guidance for your tracked impact"
+          categories={[...new Set(filteredEntries.map((entry) => entry.category))]}
+          contextSummary={
+            `${filteredEntries.length} tracked entr${filteredEntries.length === 1 ? 'y' : 'ies'} match these filters; ` +
+            `${userReported} include user-reported results and ${estimatedEntries.length} include estimates. ` +
+            'Use the category guidance to plan follow-up actions. Financial results are user-reported, and this ledger does not infer environmental savings.'
+          }
+          limit={3}
+        />
       )}
     </div>
   );

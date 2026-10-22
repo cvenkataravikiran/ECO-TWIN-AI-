@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Resource Records CRUD API
+EcoPath.AI — Resource Records CRUD API
 Full create, read, update, delete for resource consumption records.
 """
 import uuid

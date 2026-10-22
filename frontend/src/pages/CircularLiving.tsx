@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Wrench, RefreshCw, Heart, Recycle, Trash2, Package, Search, ArrowRight, Info, CheckCircle2 } from 'lucide-react';
 import { useWorkspace } from '@/hooks/useWorkspace';
+import KnowledgeGuidance from '@/components/KnowledgeGuidance';
 import { createAction } from '@/services/api';
 import styles from './CircularLiving.module.css';
 
@@ -497,6 +498,18 @@ export default function CircularLiving() {
           );
         })}
       </div>
+
+      {searched && (
+        <KnowledgeGuidance
+          title={`Knowledge-base advice for ${searched}`}
+          categories={['waste-circular', 'shopping-products']}
+          contextSummary={
+            `Options above are based on your item entry and the available item-specific guidance. ` +
+            'Check the item’s material, condition, safety, and local collection rules before choosing an action.'
+          }
+          limit={4}
+        />
+      )}
 
       {saveError && <div className={styles.noResults} role="alert">{saveError}</div>}
       {Object.keys(savedOptions).some((key) => key.startsWith(`${searched.toLowerCase()}:`)) && (

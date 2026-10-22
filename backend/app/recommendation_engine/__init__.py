@@ -1,4 +1,4 @@
 """
-EcoTwin AI — Recommendation Engine Package
+EcoPath.AI — Recommendation Engine Package
 Deterministic, rule-based sustainability recommendations.
 """

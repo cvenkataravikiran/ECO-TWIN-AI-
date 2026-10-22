@@ -1,4 +1,4 @@
-# EcoTwin AI computer vision
+# EcoPath.AI computer vision
 
 Eco-Scorer uses a local YOLOX-Tiny ONNX detector for COCO object detection. It returns detected COCO labels, confidence scores, and bounding boxes; it does not detect material composition, recyclability, appliance efficiency, or environmental impact.
 

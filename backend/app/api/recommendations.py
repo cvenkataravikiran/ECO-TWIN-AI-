@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Recommendation API Routes
+EcoPath.AI — Recommendation API Routes
 Uses the deterministic rule-based recommendation engine.
 """
 import calendar
@@ -175,7 +175,7 @@ def generate(payload: RecommendationRequest, db: Session = Depends(get_db)):
     if missing_article_ids:
         raise HTTPException(
             status_code=503,
-            detail="Recommendation guidance is unavailable. Import the EcoTwin knowledge-base articles and retry.",
+            detail="Recommendation guidance is unavailable. Import the EcoPath.AI knowledge-base articles and retry.",
         )
 
     recommendation_payloads = []

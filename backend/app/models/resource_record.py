@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Resource Record SQLAlchemy Model
+EcoPath.AI — Resource Record SQLAlchemy Model
 Stores physical and financial resource consumption entries.
 """
 

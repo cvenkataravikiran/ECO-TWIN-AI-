@@ -1,6 +1,6 @@
 /* ============================================================
    Action Planner — CSS Module
-   EcoTwin AI Sustainability Platform
+   EcoPath.AI Sustainability Platform
    ============================================================ */
 
 .container {
@@ -529,6 +529,36 @@
   color: var(--color-text-secondary);
   line-height: var(--leading-normal);
   margin-bottom: var(--space-4);
+}
+
+.recommendedNextStep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-primary-500);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-50);
+}
+
+.recommendedNextStep strong {
+  color: var(--color-primary-800);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.recommendedNextStep p {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.recommendedNextStep span {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
 }
 
 /* Key Metrics Box */
@@ -1249,6 +1279,24 @@
   margin-top: var(--space-4);
 }
 
+.emptyStateLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-700);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  text-decoration: none;
+}
+
+.emptyStateLink:hover {
+  background: var(--color-primary-800);
+}
+
 .emptyIcon {
   width: 48px;
   height: 48px;
@@ -1316,27 +1364,34 @@
   letter-spacing: -0.035em;
 }
 
-.periodRow {
-  border-radius: 10px;
-  box-shadow: none;
+.statusOverviewBar,
+.recCard,
+.actionCard,
+.transparencyBox,
+.emptyState {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
 }
 
 .actionCard {
   padding: clamp(18px, 2.5vw, 26px);
-  border-radius: 10px;
-  box-shadow: none;
 }
 
+.recCard:hover,
 .actionCard:hover {
-  box-shadow: 0 8px 24px rgba(28, 48, 35, 0.07);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .financialComparison,
-.savedSection {
-  border-radius: 9px;
+.savedSection,
+.metricCard {
+  border-radius: var(--radius-lg);
 }
 
 .controlBtn,
-.addToPlanBtn {
-  border-radius: 7px;
+.addToPlanBtn,
+.formInput,
+.recordSaveBtn {
+  border-radius: var(--radius-md);
 }

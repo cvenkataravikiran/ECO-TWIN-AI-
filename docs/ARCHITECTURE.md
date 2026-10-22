@@ -1,4 +1,4 @@
-# EcoTwin AI — Architecture
+# EcoPath.AI — Architecture
 
 ## System Architecture
 

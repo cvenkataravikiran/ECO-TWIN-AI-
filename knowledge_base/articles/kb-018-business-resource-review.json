@@ -13,8 +13,8 @@
     "Name a data owner and restrict access to authorised users"
   ],
   "limitations": ["The application does not provide enterprise-grade role-based access control", "Cross-site comparisons require consistent scopes and data quality"],
-  "source_title": "EcoTwin workspace method",
-  "source_publisher": "EcoTwin AI",
+  "source_title": "EcoPath.AI workspace method",
+  "source_publisher": "EcoPath.AI",
   "source_url": "",
   "publication_date": "2026-10-18",
   "last_verified_date": "2026-10-18",

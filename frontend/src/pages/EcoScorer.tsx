@@ -17,6 +17,7 @@ import {
 import { useWorkspace } from '@/hooks/useWorkspace';
 import {
   analyseEcoScorerImage,
+  createAction,
   getEcoScorerStatus,
   saveEcoScorerActions,
   updateEcoScorerObservation,
@@ -25,15 +26,73 @@ import {
   type EcoScorerRecommendation,
   type EcoScorerStatus,
 } from '@/services/api';
+import type { KnowledgeCategory } from '@/types';
 import styles from './EcoScorer.module.css';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+const CIRCULAR_PATHWAYS = [
+  {
+    id: 'keep-in-use',
+    condition: 'Working and still useful',
+    title: 'Keep using and maintain it',
+    guidance: 'Continue using the item and maintain it where needed; the photo does not establish its lifespan or impact.',
+  },
+  {
+    id: 'share-or-donate',
+    condition: 'Working but no longer needed',
+    title: 'Consider sharing, lending, or donating it',
+    guidance: 'Only pass it on if it is safe, usable, and wanted by the recipient.',
+  },
+  {
+    id: 'repair-before-replace',
+    condition: 'Needs repair',
+    title: 'Check repair options before replacing it',
+    guidance: 'Describe the fault and compare a repair option with replacement before deciding.',
+  },
+  {
+    id: 'verify-local-disposal',
+    condition: 'No longer usable or at end of life',
+    title: 'Check local take-back or disposal guidance',
+    guidance: 'Ask your local authority or an authorized collection provider. This app has not verified a local facility or that this item is recyclable.',
+  },
+  {
+    id: 'inspect-first',
+    condition: 'Not sure',
+    title: 'Inspect the item or seek advice before deciding',
+    guidance: 'Confirm its condition and material with a reliable source before choosing repair, reuse, or disposal.',
+  },
+] as const;
+
+const KNOWLEDGE_CATEGORIES: KnowledgeCategory[] = [
+  'food-kitchen',
+  'home-energy',
+  'travel-transport',
+  'water-nature',
+  'shopping-products',
+  'waste-circular',
+  'business-institutions',
+  'visual-assessment',
+];
+
+function isKnowledgeCategory(value: string): value is KnowledgeCategory {
+  return KNOWLEDGE_CATEGORIES.some((category) => category === value);
+}
+
 function confidenceText(value: number): string {
   if (value >= 0.75) return 'Higher model confidence';
   if (value >= 0.45) return 'Moderate model confidence';
   return 'Lower model confidence';
+}
+
+function getLocalDate(): string {
+  const now = new Date();
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-');
 }
 
 function ErrorMessage({ children }: { children: string }) {
@@ -58,6 +117,11 @@ export default function EcoScorer() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedCount, setSavedCount] = useState<number | null>(null);
+  const [pathwayConditions, setPathwayConditions] = useState<Record<string, string>>({});
+  const [pathwayNotes, setPathwayNotes] = useState<Record<string, string>>({});
+  const [savingPathwayId, setSavingPathwayId] = useState<string | null>(null);
+  const [savedPathways, setSavedPathways] = useState<Record<string, boolean>>({});
+  const [pathwayError, setPathwayError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
   const [showMethodology, setShowMethodology] = useState(false);
@@ -111,6 +175,10 @@ export default function EcoScorer() {
     setAnalysis(null);
     setRecommendations([]);
     setSavedCount(null);
+    setPathwayConditions({});
+    setPathwayNotes({});
+    setSavedPathways({});
+    setPathwayError('');
     setFile(selected);
     setPreviewUrl(URL.createObjectURL(selected));
   }, []);
@@ -122,6 +190,10 @@ export default function EcoScorer() {
     setRecommendations([]);
     setError('');
     setSavedCount(null);
+    setPathwayConditions({});
+    setPathwayNotes({});
+    setSavedPathways({});
+    setPathwayError('');
     setEditingId(null);
     setFileInputKey((key) => key + 1);
   };
@@ -186,6 +258,59 @@ export default function EcoScorer() {
     }
   };
 
+  const saveCircularPathway = async (observation: EcoScorerDetection) => {
+    if (!analysis || !currentWorkspace.id) return;
+    const pathwayId = pathwayConditions[observation.id];
+    const pathway = CIRCULAR_PATHWAYS.find((item) => item.id === pathwayId);
+    if (!pathway) return;
+
+    setPathwayError('');
+    setSavingPathwayId(observation.id);
+    try {
+      const relatedRecommendation = recommendations.find((item) =>
+        item.observation_ids.includes(observation.id),
+      );
+      const category = relatedRecommendation && isKnowledgeCategory(relatedRecommendation.category)
+        ? relatedRecommendation.category
+        : 'waste-circular';
+      const userNote = pathwayNotes[observation.id]?.trim();
+
+      await createAction({
+        workspace_id: currentWorkspace.id,
+        recommendation_id: `eco-pathway-${analysis.assessment_id}-${observation.id}`,
+        title: `${pathway.title}: ${observation.userLabel || observation.classLabel}`.slice(0, 255),
+        category,
+        status: 'planned',
+        planned_date: getLocalDate(),
+        initial_estimate_amount: null,
+        initial_estimate_currency: 'INR',
+        notes: [
+          'Photo-assisted circular action selected by the user.',
+          `User-confirmed object label: ${observation.userLabel || observation.classLabel}.`,
+          `User-selected condition: ${pathway.condition}.`,
+          `Planned next step: ${pathway.title}.`,
+          pathway.guidance,
+          'No environmental impact, material, or recyclability was inferred from the image.',
+          userNote ? `User note: ${userNote}` : '',
+        ].filter(Boolean).join('\n'),
+      });
+      setSavedPathways((previous) => ({ ...previous, [observation.id]: true }));
+    } catch (saveError) {
+      console.error('Unable to save Eco-Scorer action pathway', saveError);
+      setPathwayError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Could not add this action to the Action Planner.',
+      );
+    } finally {
+      setSavingPathwayId(null);
+    }
+  };
+
+  const hasConfirmedObservations = analysis?.detections.some(
+    (item) => item.status === 'confirmed' || item.status === 'corrected',
+  ) ?? false;
+
   const retryStatus = async () => {
     setStatusLoading(true);
     setStatusError('');
@@ -237,10 +362,10 @@ export default function EcoScorer() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Eco-Scorer</h1>
-        <p className={styles.pageSubtitle}>Observe. Confirm. Find relevant guidance.</p>
+        <p className={styles.pageSubtitle}>Observe. Explore practical guidance. Choose what to do.</p>
         <p className={styles.pageDesc}>
           Local computer vision identifies supported COCO object classes only.
-          Confirmed objects can retrieve curated recommendations from EcoTwin’s private knowledge base.
+          Review and confirm detections before saving related actions.
           A photo does not establish environmental performance, lifecycle emissions, material composition,
           local recyclability, or actual electricity use, so this feature does not invent a numeric eco-score.
         </p>
@@ -303,7 +428,7 @@ export default function EcoScorer() {
               <Shield size={18} style={{ color: 'var(--color-primary-500)' }} />
               <div>
                 <div className={styles.infoCardTitle}>Image privacy</div>
-                <div className={styles.infoCardText}>The image is sent to your EcoTwin backend for local processing, then discarded. The image itself is not retained; assessment metadata and confirmed labels are saved.</div>
+                <div className={styles.infoCardText}>The image is sent to your EcoPath.AI backend for local processing, then discarded. The image itself is not retained; assessment metadata and confirmed labels are saved.</div>
               </div>
             </div>
             <div className={styles.infoCard}>
@@ -460,53 +585,163 @@ export default function EcoScorer() {
             </section>
 
             <section className={styles.panelSection}>
-              <div className={styles.panelTitle}>Knowledge-base recommendations</div>
+              <div className={styles.panelTitle}><Leaf size={17} /> Circular action pathway</div>
+              <p className={styles.panelNote}>
+                Turn a user-confirmed observation into a practical next step. Choose the item’s condition;
+                EcoPath.AI will save your selected action to the Action Planner, not claim an environmental result.
+              </p>
+              {pathwayError && <ErrorMessage>{pathwayError}</ErrorMessage>}
+              {!analysis.detections.some((item) => item.status === 'confirmed' || item.status === 'corrected') ? (
+                <div className={styles.emptyState}>
+                  <Check size={20} />
+                  <strong>Confirm an observation to plan an action</strong>
+                  <span>Review the detected label first so the action is based on an object you have checked.</span>
+                </div>
+              ) : (
+                analysis.detections
+                  .filter((item) => item.status === 'confirmed' || item.status === 'corrected')
+                  .map((item) => {
+                    const selectedPathway = CIRCULAR_PATHWAYS.find(
+                      (pathway) => pathway.id === pathwayConditions[item.id],
+                    );
+                    return (
+                      <article key={item.id} className={styles.pathwayCard}>
+                        <div className={styles.recommendationTitle}>
+                          {item.userLabel || item.classLabel}
+                          <span className={styles.pathwayConfirmed}>User confirmed</span>
+                        </div>
+                        <label className={styles.pathwayLabel} htmlFor={`pathway-${item.id}`}>
+                          What best describes this item?
+                        </label>
+                        <select
+                          id={`pathway-${item.id}`}
+                          className={styles.pathwaySelect}
+                          value={pathwayConditions[item.id] ?? ''}
+                          disabled={Boolean(savedPathways[item.id])}
+                          onChange={(event) => setPathwayConditions((previous) => ({
+                            ...previous,
+                            [item.id]: event.target.value,
+                          }))}
+                        >
+                          <option value="">Choose the item’s current condition</option>
+                          {CIRCULAR_PATHWAYS.map((pathway) => (
+                            <option key={pathway.id} value={pathway.id}>{pathway.condition}</option>
+                          ))}
+                        </select>
+                        {selectedPathway && (
+                          <div className={styles.pathwaySuggestion}>
+                            <strong>Possible next step: {selectedPathway.title}</strong>
+                            <span>{selectedPathway.guidance}</span>
+                          </div>
+                        )}
+                        <label className={styles.pathwayLabel} htmlFor={`pathway-note-${item.id}`}>
+                          Add a personal plan or context (optional)
+                        </label>
+                        <textarea
+                          id={`pathway-note-${item.id}`}
+                          className={styles.pathwayNote}
+                          value={pathwayNotes[item.id] ?? ''}
+                          maxLength={1000}
+                          disabled={Boolean(savedPathways[item.id])}
+                          placeholder="For example: I will ask a local repair shop for an estimate."
+                          onChange={(event) => setPathwayNotes((previous) => ({
+                            ...previous,
+                            [item.id]: event.target.value,
+                          }))}
+                        />
+                        {savedPathways[item.id] ? (
+                          <div className={styles.savedConfirm} role="status">
+                            <Check size={16} /> Action added to your Action Planner. Record what happened there after you take the step.
+                          </div>
+                        ) : (
+                          <button
+                            className={styles.saveBtn}
+                            type="button"
+                            disabled={!selectedPathway || savingPathwayId !== null}
+                            onClick={() => void saveCircularPathway(item)}
+                          >
+                            <Save size={16} />
+                            {savingPathwayId === item.id ? 'Adding action…' : 'Add this action to my planner'}
+                          </button>
+                        )}
+                      </article>
+                    );
+                  })
+              )}
+              <p className={styles.pathwayDisclaimer}>
+                Repair, sharing, donation and local disposal options depend on item condition and local services.
+                Verify those details yourself; Eco-Scorer does not certify recyclability or calculate impact.
+              </p>
+            </section>
+
+            <section className={styles.panelSection}>
+              <div className={styles.panelTitle}>Recommended actions</div>
+              <p className={styles.panelNote}>
+                Choose a practical next step for a reviewed item. A photo alone does not determine its
+                environmental impact or local recyclability.
+              </p>
               {recommendations.length === 0 ? (
-                <p className={styles.panelNote}>Confirm a mapped observation to retrieve relevant guidance from the private knowledge base. No recommendation is inferred for unconfirmed or unsupported labels.</p>
-              ) : recommendations.map((recommendation) => (
-                <article key={recommendation.article_id} className={styles.recommendationCard}>
-                  <div className={styles.recommendationTitle}>{recommendation.title}</div>
-                  <p>{recommendation.summary}</p>
-                  {recommendation.guidance.map((guidance) => <p key={guidance}>{guidance}</p>)}
-                  {recommendation.deterministic_recommendation && (
-                    <div className={styles.calculationNote}>
-                      <strong>{recommendation.deterministic_recommendation.title}</strong>
-                      <p>{recommendation.deterministic_recommendation.data_basis}</p>
-                      <p>
-                        For {recommendation.deterministic_recommendation.measurement_period}: measured workspace electricity was{' '}
-                        {recommendation.deterministic_recommendation.baseline_monthly_electricity_kwh.toFixed(2)} kWh, with a recorded cost of{' '}
-                        {recommendation.deterministic_recommendation.baseline_currency}{' '}
-                        {recommendation.deterministic_recommendation.baseline_monthly_electricity_cost.toFixed(2)}.
-                        {' '}This estimate is not derived from the photo.
-                      </p>
-                      {recommendation.deterministic_recommendation.estimated_monthly_savings !== null && (
-                        <p>
-                          Estimated monthly cost savings: {recommendation.deterministic_recommendation.currency}{' '}
-                          {recommendation.deterministic_recommendation.estimated_monthly_savings.toFixed(2)} · confidence:{' '}
-                          {recommendation.deterministic_recommendation.confidence_level}
-                        </p>
-                      )}
-                      <p>Formula: {recommendation.deterministic_recommendation.formula_description}</p>
-                      <p>Assumptions: {recommendation.deterministic_recommendation.assumptions.join(' ')}</p>
-                      <p>To improve this estimate: {recommendation.deterministic_recommendation.missing_data.join(' ')}</p>
-                    </div>
-                  )}
-                  {recommendation.implementation_steps.length > 0 && (
-                    <details>
-                      <summary>Suggested steps from article {recommendation.article_id}</summary>
-                      <ol>{recommendation.implementation_steps.map((step) => <li key={step}>{step}</li>)}</ol>
-                    </details>
-                  )}
-                  {recommendation.limitations.map((limitation) => <small key={limitation}>Limitation: {limitation}</small>)}
-                </article>
-              ))}
+                <p className={styles.panelNote}>No suitable actions are available for these detections. Review or correct the detected items above.</p>
+              ) : recommendations.map((recommendation) => {
+                const primarySuggestion = recommendation.guidance[0]
+                  || recommendation.implementation_steps[0]
+                  || recommendation.summary;
+                const additionalSteps = recommendation.implementation_steps.slice(1);
+                return (
+                  <article key={recommendation.article_id} className={styles.recommendationCard}>
+                    <div className={styles.recommendationTitle}>{recommendation.title}</div>
+                    <p className={styles.recommendationAction}>{primarySuggestion}</p>
+                    {recommendation.requires_confirmation && (
+                      <p className={styles.panelNote}>Confirm the detected item before saving this action.</p>
+                    )}
+                    {additionalSteps.length > 0 && (
+                      <details>
+                        <summary>More practical steps</summary>
+                        <ol>{additionalSteps.map((step) => <li key={step}>{step}</li>)}</ol>
+                      </details>
+                    )}
+                    {recommendation.deterministic_recommendation && (
+                      <details>
+                        <summary>View workspace calculation details</summary>
+                        <div className={styles.calculationNote}>
+                          <strong>{recommendation.deterministic_recommendation.title}</strong>
+                          <p>{recommendation.deterministic_recommendation.data_basis}</p>
+                          <p>
+                            For {recommendation.deterministic_recommendation.measurement_period}: measured workspace electricity was{' '}
+                            {recommendation.deterministic_recommendation.baseline_monthly_electricity_kwh.toFixed(2)} kWh, with a recorded cost of{' '}
+                            {recommendation.deterministic_recommendation.baseline_currency}{' '}
+                            {recommendation.deterministic_recommendation.baseline_monthly_electricity_cost.toFixed(2)}.
+                            {' '}This estimate is independent of the photo.
+                          </p>
+                          {recommendation.deterministic_recommendation.estimated_monthly_savings !== null && (
+                            <p>
+                              Estimated monthly cost savings: {recommendation.deterministic_recommendation.currency}{' '}
+                              {recommendation.deterministic_recommendation.estimated_monthly_savings.toFixed(2)} · confidence:{' '}
+                              {recommendation.deterministic_recommendation.confidence_level}
+                            </p>
+                          )}
+                          <p>Formula: {recommendation.deterministic_recommendation.formula_description}</p>
+                          <p>Assumptions: {recommendation.deterministic_recommendation.assumptions.join(' ')}</p>
+                          <p>To improve this estimate: {recommendation.deterministic_recommendation.missing_data.join(' ')}</p>
+                        </div>
+                      </details>
+                    )}
+                    {recommendation.limitations.length > 0 && (
+                      <details>
+                        <summary>Important limitations</summary>
+                        <ul>{recommendation.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
+                      </details>
+                    )}
+                  </article>
+                );
+              })}
               {savedCount === null ? (
-                <button className={styles.saveBtn} type="button" onClick={() => void saveActions()} disabled={saving || recommendations.length === 0}>
-                  <Save size={16} /> {saving ? 'Saving to Action Planner…' : 'Save suitable actions to Action Planner'}
+                <button className={styles.saveBtn} type="button" onClick={() => void saveActions()} disabled={saving || recommendations.length === 0 || !hasConfirmedObservations}>
+                  <Save size={16} /> {saving ? 'Saving to Action Planner…' : 'Add confirmed actions to Action Planner'}
                 </button>
               ) : (
                 <div className={styles.savedConfirm} role="status">
-                  <Check size={16} /> {savedCount > 0 ? `${savedCount} knowledge-base action${savedCount === 1 ? '' : 's'} added to your Action Planner.` : 'These recommendations are already in your Action Planner.'}
+                  <Check size={16} /> {savedCount > 0 ? `${savedCount} action${savedCount === 1 ? '' : 's'} added to your Action Planner.` : 'No new confirmed actions were added to your Action Planner.'}
                 </div>
               )}
             </section>

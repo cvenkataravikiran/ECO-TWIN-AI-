@@ -13,8 +13,8 @@
     "Compare the options without treating an estimate as an invoice"
   ],
   "limitations": ["Repair quality, parts availability, and price vary", "Safety requirements take precedence", "No lifecycle impact estimate is supplied"],
-  "source_title": "EcoTwin decision method",
-  "source_publisher": "EcoTwin AI",
+  "source_title": "EcoPath.AI decision method",
+  "source_publisher": "EcoPath.AI",
   "source_url": "",
   "publication_date": "2026-10-18",
   "last_verified_date": "2026-10-18",

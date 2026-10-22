@@ -1,7 +1,4 @@
-"""
-EcoTwin AI — FastAPI Backend
-Main application entry point
-"""
+"""EcoPath.AI FastAPI backend entry point."""
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -25,7 +22,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="EcoTwin AI API",
+    title="EcoPath.AI API",
     description="Sustainability Decision and Action Platform API",
     version="1.0.0",
     docs_url="/api/docs",
@@ -43,7 +40,18 @@ app.add_middleware(
 )
 
 # Include routers
-from app.api import health, workspaces, resources, recommendations, actions, comparisons, impact, reports, eco_scorer
+from app.api import (
+    actions,
+    comparisons,
+    eco_scorer,
+    health,
+    impact,
+    knowledge,
+    recommendations,
+    reports,
+    resources,
+    workspaces,
+)
 
 app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(workspaces.router, prefix="/api/workspaces", tags=["Workspaces"])
@@ -54,8 +62,9 @@ app.include_router(comparisons.router, prefix="/api/comparisons", tags=["Compari
 app.include_router(impact.router, prefix="/api/impact", tags=["Impact Ledger"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(eco_scorer.router, prefix="/api/eco-scorer", tags=["Eco-Scorer"])
+app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge Guidance"])
 
 
 @app.get("/")
 def root():
-    return {"message": "EcoTwin AI API", "docs": "/api/docs"}
+    return {"message": "EcoPath.AI API", "docs": "/api/docs"}

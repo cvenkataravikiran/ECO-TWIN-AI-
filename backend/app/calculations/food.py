@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Food Waste Calculations
+EcoPath.AI — Food Waste Calculations
 Models food expenditure losses, waste reduction targets, and estimated cost recovery.
 No national waste-rate benchmark is applied; users must provide measured inputs.
 """

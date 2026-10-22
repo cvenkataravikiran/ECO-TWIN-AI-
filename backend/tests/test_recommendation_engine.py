@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Recommendation Engine Tests
+EcoPath.AI — Recommendation Engine Tests
 """
 import json
 from pathlib import Path
@@ -68,11 +68,12 @@ class TestGenerateRecommendations:
         assert "rec-004" not in ids
         assert "rec-012" in ids
 
-    def test_empty_context_returns_fallback(self):
-        ctx = UserContext()
-        results = generate_recommendations(ctx)
-        assert len(results) >= 1
-        assert "rec-005" in [r.id for r in results]
+    def test_empty_context_does_not_return_unsolicited_recommendations(self):
+        assert generate_recommendations(UserContext()) == []
+
+    def test_explicit_water_goal_can_recommend_measuring_water_without_a_baseline(self):
+        results = generate_recommendations(UserContext(goals=["reduce-water"]))
+        assert "rec-005" in [result.id for result in results]
 
     def test_goals_boost_priority(self):
         ctx_no = UserContext(monthly_electricity_kwh=268, price_per_kwh=0.15)
@@ -129,3 +130,66 @@ class TestGenerateRecommendations:
         assert all(result.knowledge_article_id in article_ids for result in results)
         assert all(result.estimated_monthly_savings is None for result in results)
         assert all(result.environmental_estimate is None for result in results)
+
+    @pytest.mark.parametrize(
+        ("context", "expected_ids", "expected_basis"),
+        [
+            (
+                UserContext(monthly_electricity_kwh=80),
+                {"rec-002", "rec-013"},
+                "Electricity input: 80 kWh/month.",
+            ),
+            (
+                UserContext(monthly_grocery_spend=420),
+                {"rec-003", "rec-014"},
+                "Grocery-spend input: ₹420/month.",
+            ),
+            (
+                UserContext(monthly_water_liters=2500),
+                {"rec-006", "rec-007"},
+                "Water input: 2500 L/month.",
+            ),
+            (
+                UserContext(monthly_waste_kg=12),
+                {"rec-008", "rec-009"},
+                "Waste input: 12.0 kg/month.",
+            ),
+            (
+                UserContext(monthly_shopping_spend=1500),
+                {"rec-010", "rec-011"},
+                "Shopping input: ₹1500/month.",
+            ),
+            (
+                UserContext(monthly_travel_km=120, travel_mode="car"),
+                {"rec-004", "rec-012"},
+                "Travel input: 120 km/month by car.",
+            ),
+        ],
+    )
+    def test_resource_inputs_produce_two_concise_actions_with_personalized_basis(
+        self,
+        context,
+        expected_ids,
+        expected_basis,
+    ):
+        recommendations = generate_recommendations(context)
+        matching = [item for item in recommendations if item.id in expected_ids]
+
+        assert {item.id for item in matching} == expected_ids
+        assert all(item.next_step and len(item.next_step) < 150 for item in matching)
+        assert all(item.input_basis == expected_basis for item in matching)
+
+    def test_multiple_resource_categories_produce_category_specific_actions(self):
+        recommendations = generate_recommendations(UserContext(
+            monthly_electricity_kwh=180,
+            monthly_water_liters=2500,
+            monthly_waste_kg=12,
+        ))
+
+        assert {item.category for item in recommendations} >= {
+            "home-energy",
+            "water-nature",
+            "waste-circular",
+        }
+        assert all(item.to_dict()["next_step"] == item.next_step for item in recommendations)
+        assert all(item.to_dict()["input_basis"] == item.input_basis for item in recommendations)

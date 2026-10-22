@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Actions (Action Plan) CRUD API
+EcoPath.AI — Actions (Action Plan) CRUD API
 """
 import uuid
 from datetime import datetime
@@ -7,7 +7,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.db.database import get_db
 from app.core.workspace_access import require_live_workspace
@@ -39,8 +39,8 @@ class ActionCreate(BaseModel):
 class ActionUpdate(BaseModel):
     status: Optional[str] = None
     completed_date: Optional[str] = None
-    actual_expenditure_amount: Optional[float] = None
-    actual_savings_amount: Optional[float] = None
+    actual_expenditure_amount: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    actual_savings_amount: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
     notes: Optional[str] = None
 
 

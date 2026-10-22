@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Workspace } from '@/types';
-import { createWorkspace as createWorkspaceRequest, getWorkspaces } from '@/services/api';
+import { createWorkspace as createWorkspaceRequest, deleteWorkspace as deleteWorkspaceRequest, getWorkspaces } from '@/services/api';
 
 interface WorkspaceContextType {
   currentWorkspace: Workspace;
@@ -10,6 +10,7 @@ interface WorkspaceContextType {
   reloadWorkspaces: () => Promise<void>;
   switchWorkspace: (id: string) => void;
   createWorkspace: (payload: Pick<Workspace, 'name' | 'type' | 'description'>) => Promise<Workspace>;
+  deleteWorkspace: (id: string) => Promise<void>;
 }
 
 const emptyWorkspace: Workspace = {
@@ -75,6 +76,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return workspace;
   };
 
+  const deleteWorkspace = async (id: string) => {
+    await deleteWorkspaceRequest(id);
+    const remainingWorkspaces = workspaces.filter((workspace) => workspace.id !== id);
+    setWorkspaces(remainingWorkspaces);
+    setCurrentId((current) => current === id ? remainingWorkspaces[0]?.id ?? '' : current);
+    setWorkspacesError(null);
+  };
+
   const value: WorkspaceContextType = {
     currentWorkspace,
     workspaces,
@@ -83,6 +92,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     reloadWorkspaces,
     switchWorkspace: setCurrentId,
     createWorkspace,
+    deleteWorkspace,
   };
 
   return <WorkspaceContext value={value}>{children}</WorkspaceContext>;

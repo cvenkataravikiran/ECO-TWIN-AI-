@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Energy Calculation Tests
+EcoPath.AI — Energy Calculation Tests
 Tests for backend/app/calculations/energy.py
 """
 import pytest

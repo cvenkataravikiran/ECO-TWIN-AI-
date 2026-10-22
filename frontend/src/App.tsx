@@ -5,6 +5,7 @@ import { lazy, Suspense } from 'react';
 
 // Lazy-load pages for better performance
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Landing = lazy(() => import('@/pages/Landing'));
 const Resources = lazy(() => import('@/pages/Resources'));
 const ActionPlanner = lazy(() => import('@/pages/ActionPlanner'));
 const Compare = lazy(() => import('@/pages/Compare'));
@@ -24,6 +25,7 @@ function PageLoader() {
       color: 'var(--color-text-tertiary)',
       fontSize: 'var(--text-sm)',
       gap: 'var(--space-3)',
+      letterSpacing: '0.02em',
     }}>
       <div className="animate-spin" style={{
         width: 20,
@@ -42,8 +44,10 @@ export default function App() {
     <BrowserRouter>
       <WorkspaceProvider>
         <Routes>
+          <Route path="/" element={
+            <Suspense fallback={<PageLoader />}><Landing /></Suspense>
+          } />
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={
               <Suspense fallback={<PageLoader />}><Dashboard /></Suspense>
             } />

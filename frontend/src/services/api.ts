@@ -1,5 +1,5 @@
 // src/services/api.ts
-// Centralized API service wrapper for EcoTwin AI frontend.
+// Centralized API service wrapper for EcoPath.AI frontend.
 // All requests go to the FastAPI backend running on localhost:8000.
 // This file provides typed helper functions used by React components.
 
@@ -32,6 +32,29 @@ export interface EcoScorerStatus {
   limitations: string[];
 }
 
+export interface KnowledgeArticleSummary {
+  id: string;
+  title: string;
+  category: string;
+  summary: string;
+  implementation_steps: string[];
+  limitations: string[];
+  source_title: string;
+  source_publisher: string;
+  source_url: string;
+  verification_status: string;
+}
+
+export async function getKnowledgeArticles(
+  category: string,
+  size = 3,
+): Promise<KnowledgeArticleSummary[]> {
+  const query = new URLSearchParams({ category, size: String(size) });
+  const response = await fetch(`${BASE_URL}/knowledge/?${query.toString()}`);
+  const data = await handleResponse<{ items: KnowledgeArticleSummary[] }>(response);
+  return data.items;
+}
+
 export interface EcoScorerDetection {
   id: string;
   class_label: string;
@@ -55,6 +78,7 @@ export interface EcoScorerRecommendation {
   implementation_steps: string[];
   limitations: string[];
   observation_ids: string[];
+  requires_confirmation: boolean;
   guidance: string[];
   deterministic_recommendation?: {
     id: string;
@@ -206,6 +230,8 @@ function normalizeRecommendation(raw: any): Recommendation {
     title: raw.title ?? '',
     problemOrOpportunity: raw.problem_or_opportunity ?? raw.problemOrOpportunity ?? raw.relevance_explanation ?? raw.relevanceExplanation ?? '',
     relevanceExplanation: raw.relevance_explanation ?? raw.relevanceExplanation ?? '',
+    nextStep: raw.next_step ?? raw.nextStep ?? raw.title ?? 'Review the guidance and choose a practical next step.',
+    inputBasis: raw.input_basis ?? raw.inputBasis ?? 'Based on the information available in this workspace.',
     knowledgeArticleId: raw.knowledge_article_id ?? raw.knowledgeArticleId ?? '',
     guidanceSummary: raw.guidance_summary ?? '',
     guidanceLimitations: Array.isArray(raw.guidance_limitations) ? raw.guidance_limitations : [],
@@ -258,6 +284,13 @@ export async function createWorkspace(payload: Pick<Workspace, 'name' | 'type' |
     body: JSON.stringify(payload),
   });
   return handleResponse<Workspace>(response);
+}
+
+export async function deleteWorkspace(workspaceId: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`, {
+    method: 'DELETE',
+  });
+  await handleResponse<{ deleted: boolean }>(response);
 }
 
 export async function updateWorkspace(

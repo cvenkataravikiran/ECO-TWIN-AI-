@@ -1,1 +1,1 @@
-"""EcoTwin AI Backend"""
+"""EcoPath.AI backend."""

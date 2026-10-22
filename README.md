@@ -1,10 +1,10 @@
-# EcoTwin AI
+# EcoPath.AI
 
 **Sustainability Decision, Comparison, Computer Vision Eco-Scoring and Action Platform**
 
 > *Understand your impact. Find your next best action. Measure what changes.*
 
-EcoTwin AI is a student-led sustainability innovation project that connects observation, understanding, comparison, decision-making, action, and verification in one integrated workflow.
+EcoPath.AI is a student-led sustainability innovation project that connects observation, understanding, comparison, decision-making, action, and verification in one integrated workflow.
 
 ## Quick Start
 
@@ -33,15 +33,17 @@ Eco-Scorer requires local YOLOX-Tiny ONNX weights. From the project root, run:
 python scripts/download_cv_model.py
 ```
 
-The model is not committed to the repository. Without the weights and inference dependencies, the rest of EcoTwin AI works normally, Eco-Scorer navigation is hidden, and the image-analysis API does not return simulated results.
+The model is not committed to the repository. Without the weights and inference dependencies, the rest of EcoPath.AI works normally, Eco-Scorer navigation is hidden, and the image-analysis API does not return simulated results.
 
 ### 2. Initialize Database
 
 The backend creates database tables when it starts and does not seed demo workspaces or resource
-records. On a new installation, create a workspace in the sidebar and enter your own data. Existing
-database contents are not deleted. Legacy demo workspaces and their records are preserved in the
-database but are hidden from the workspace UI and rejected by live workspace APIs. Currency and date
-display are configured for India (INR and `en-IN`).
+records. The landing page lets you create a personal or business workspace or open an existing one.
+You can switch, create, or delete workspaces from the sidebar. Deleting a workspace permanently
+deletes its associated resource records, actions, comparisons, organization data, and Eco-Scorer
+assessments after confirmation. Existing database contents are not otherwise deleted. Legacy demo
+workspaces and their records are preserved in the database but are hidden from the workspace UI and
+rejected by live workspace APIs. Currency and date display are configured for India (INR and `en-IN`).
 
 Demo fixtures are not part of the live startup path. `scripts/seed_demo_data.py` is only for a
 disposable presentation database and requires the explicit `ECOTWIN_ALLOW_DEMO_SEED=1` opt-in.
@@ -93,7 +95,7 @@ This application does **not** use OpenAI, Gemini, Claude, or any LLM/chatbot API
 ## Project Structure
 
 ```
-ecotwin-ai/
+ecopath-ai/
 ├── frontend/          # React + TypeScript + Vite
 │   └── src/
 │       ├── pages/     # User-facing screens
@@ -121,12 +123,11 @@ ecotwin-ai/
 | Page | Description | Status |
 |------|-------------|--------|
 | Dashboard | Sustainability workspace overview with charts | ✅ Working |
-| Resources | Resource & expense tracker with CRUD | ✅ Working |
-| Action Planner | Personalized recommendations + action tracking | ✅ Working |
-| Compare | Cost comparisons require user-entered values; unsupported emissions are withheld | ✅ Working |
-| Recommendations | Contextual deterministic advice backed by internal curated articles and transparent assumptions | ✅ Working |
-| Circular Living | Waste hierarchy guidance finder | ✅ Working |
-| Eco-Scorer | Optional local object detection, user review, knowledge-base recommendations, and planner actions | Available when the local model is installed; no appearance-based impact score |
+| Resources | Resource & expense tracker with category-matched measurement guidance | ✅ Working |
+| Compare | Cost comparisons require user-entered values; scenario-matched knowledge guidance; unsupported emissions are withheld | ✅ Working |
+| Circular Living | Waste hierarchy finder with repair, reuse, and local waste guidance | ✅ Working |
+| Eco-Scorer | Optional local object detection, user review, mapped knowledge-base guidance, and planner actions | Available when the local model is installed; no appearance-based impact score |
+| Action Planner | Workspace-specific deterministic recommendations with article-backed guidance and action tracking | ✅ Working |
 | Impact Ledger | Estimated vs actual impact tracking | ✅ Working |
 | Reports | CSV export and report generation | ✅ Working |
 | Settings | Workspace and display configuration | ✅ Working |
@@ -136,7 +137,8 @@ ecotwin-ai/
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/api/health` | Health check |
-| GET | `/api/workspaces/` | List workspaces |
+| GET/POST | `/api/workspaces/` | List or create workspaces |
+| GET/PUT/DELETE | `/api/workspaces/{id}` | Read, update, or delete a workspace and its associated data |
 | GET/POST/PUT/DELETE | `/api/resources/` | Resource CRUD |
 | GET | `/api/resources/export/csv` | CSV export |
 | POST | `/api/recommendations/generate` | Generate recommendations |
@@ -148,6 +150,7 @@ ecotwin-ai/
 | POST | `/api/eco-scorer/analyse` | Validate image and run local object detection |
 | PATCH | `/api/eco-scorer/observations/{id}` | Confirm, correct, or dismiss a detection |
 | POST | `/api/eco-scorer/assessments/{id}/save-actions` | Save article-backed actions to the planner |
+| GET | `/api/knowledge/` | Load category-matched curated guidance for relevant application screens |
 | GET | `/api/reports/export/csv` | Export data |
 
 ## Live Data and Regional Settings

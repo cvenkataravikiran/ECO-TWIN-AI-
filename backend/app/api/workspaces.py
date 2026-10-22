@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
+from app.models import OrgLocation, OrgMembership, ResourceRecord, SavedComparison
 from app.models.workspace import Workspace
 
 router = APIRouter()
@@ -98,3 +99,26 @@ def update_workspace(workspace_id: str, payload: WorkspaceUpdate, db: Session = 
     db.commit()
     db.refresh(ws)
     return _to_dict(ws)
+
+
+@router.delete("/{workspace_id}")
+def delete_workspace(workspace_id: str, db: Session = Depends(get_db)):
+    ws = db.get(Workspace, workspace_id)
+    if not ws or ws.is_demo:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    db.query(ResourceRecord).filter(ResourceRecord.workspace_id == workspace_id).delete(
+        synchronize_session=False,
+    )
+    db.query(SavedComparison).filter(SavedComparison.workspace_id == workspace_id).delete(
+        synchronize_session=False,
+    )
+    db.query(OrgLocation).filter(OrgLocation.workspace_id == workspace_id).delete(
+        synchronize_session=False,
+    )
+    db.query(OrgMembership).filter(OrgMembership.workspace_id == workspace_id).delete(
+        synchronize_session=False,
+    )
+    db.delete(ws)
+    db.commit()
+    return {"deleted": True, "workspace_id": workspace_id}

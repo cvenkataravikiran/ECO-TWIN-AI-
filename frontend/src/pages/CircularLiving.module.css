@@ -63,25 +63,33 @@
 }
 
 .hierarchyBar,
-.searchCard {
-  border-radius: 10px;
-  box-shadow: none;
+.searchCard,
+.optionCard,
+.noResults,
+.disclaimer {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
 }
 
 .optionsGrid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .optionCard {
   min-height: 235px;
-  border-radius: 10px;
-  box-shadow: none;
 }
 
 .optionCard:not(.notApplicable):hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(28, 48, 35, 0.07);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.input,
+.select,
+.searchBtn,
+.examplePill {
+  border-radius: var(--radius-md);
 }
 
 @media (max-width: 900px) {

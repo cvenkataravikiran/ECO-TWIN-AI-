@@ -2,7 +2,7 @@
   "id": "kb-007",
   "title": "Waste hierarchy and segregation (India)",
   "category": "waste-circular",
-  "summary": "Prefer prevention and reuse, then recycling of segregated dry waste, then responsible disposal. Follow your Urban Local Body's published segregation rules. EcoTwin does not invent GHMC ward schedules or recyclers.",
+  "summary": "Prefer prevention and reuse, then recycling of segregated dry waste, then responsible disposal. Follow your Urban Local Body's published segregation rules. EcoPath.AI does not invent GHMC ward schedules or recyclers.",
   "content": "The Central Pollution Control Board publishes national guidance and rules related to waste. Cities implement segregation (typically wet/dry, sometimes domestic hazardous) differently.\n\nPractical household order:\n1. Prevent — do not buy what will be thrown immediately.\n2. Reuse — jars, bags, containers you will actually use.\n3. Recycle — only materials your local collection actually accepts.\n4. Dispose — residual waste as directed locally.\n\nE-waste and batteries should not go in mixed household waste. Use authorised e-waste channels listed by your state board or producer — look up the current list; this article does not name shops.\n\nMark this article's local operational details as unverified until you confirm your ULB circular.",
   "audience": ["individual", "household", "business", "institution", "all"],
   "applicability_conditions": ["Generates household or institutional waste in India"],
@@ -10,7 +10,7 @@
     "Keep wet and dry waste separate if your ULB requires it",
     "Confirm accepted dry-waste types from an official local notice",
     "Log estimated kg of residual waste monthly if you want a baseline",
-    "Use Circular Living in EcoTwin for item-level questions, then confirm locally"
+    "Use Circular Living in EcoPath.AI for item-level questions, then confirm locally"
   ],
   "limitations": [
     "CPCB homepage was verified on 16 October 2026; city SOP PDFs were not imported",

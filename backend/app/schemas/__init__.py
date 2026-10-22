@@ -1,1 +1,1 @@
-# EcoTwin AI Pydantic Schemas
+# EcoPath.AI Pydantic Schemas

@@ -5,10 +5,14 @@
   width: var(--sidebar-width);
   height: 100vh;
   background-color: var(--color-bg-sidebar);
-  background-image: linear-gradient(180deg, #1b332a 0%, #172d26 42%, #142820 100%);
+  background-image:
+    radial-gradient(520px 280px at 0% 0%, rgba(86, 165, 126, 0.16), transparent 70%),
+    linear-gradient(180deg, #163329 0%, #12241e 48%, #0e1d18 100%);
   display: flex;
   flex-direction: column;
   z-index: 100;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 12px 0 40px rgba(8, 20, 16, 0.18);
   transition: transform var(--transition-base);
 }
 
@@ -17,26 +21,27 @@
 }
 
 .brand {
-  padding: 24px 22px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  padding: 26px 22px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .brandRow {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .brandMark {
   display: inline-flex;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
   align-items: center;
   justify-content: center;
-  background: rgba(181, 211, 175, 0.12);
-  border: 1px solid rgba(195, 222, 186, 0.18);
-  color: #b9d7a9;
+  background: linear-gradient(180deg, rgba(181, 211, 175, 0.18), rgba(181, 211, 175, 0.08));
+  border: 1px solid rgba(195, 222, 186, 0.22);
+  color: #c8e0ba;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .brandName {
@@ -44,20 +49,20 @@
   font-size: var(--text-xl);
   font-weight: var(--font-regular);
   color: var(--color-text-inverse);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
 }
 
 .brandTagline {
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.52);
-  margin-top: 10px;
-  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 12px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .workspaceSwitcher {
   padding: 16px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .workspaceButton {
@@ -65,20 +70,21 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 10px 11px;
-  background: rgba(255, 255, 255, 0.045);
+  padding: 11px 12px;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
   color: var(--color-text-inverse);
   font-size: var(--text-sm);
   text-align: left;
 }
 
 .workspaceButton:hover {
-  background: rgba(255, 255, 255, 0.085);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
 }
 
 .workspaceInfo {
@@ -103,12 +109,14 @@
   position: absolute;
   left: var(--space-5);
   right: var(--space-5);
+  margin-top: 6px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   z-index: 110;
   overflow: hidden;
+  animation: fadeIn 0.18s ease;
 }
 
 .workspaceOption {
@@ -132,6 +140,58 @@
 
 .workspaceOptionActive {
   background: var(--color-primary-50);
+}
+
+.workspaceOptionRow {
+  display: flex;
+  align-items: stretch;
+  padding-right: var(--space-2);
+}
+
+.workspaceOptionRow .workspaceOption {
+  flex: 1;
+  min-width: 0;
+}
+
+.workspaceOptionText {
+  min-width: 0;
+}
+
+.workspaceOptionName {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspaceOptionType {
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+}
+
+.workspaceDeleteButton {
+  display: grid;
+  width: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  align-self: center;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.workspaceDeleteButton:hover:not(:disabled) {
+  background: var(--color-error-soft);
+  color: var(--color-error);
+}
+
+.workspaceDeleteButton:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 
 .workspaceLoadError,
@@ -172,7 +232,7 @@
   width: calc(100% - var(--space-4));
   margin: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border: 1px dashed var(--color-border-light);
+  border: 1px dashed var(--color-border-medium);
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-primary-700);
@@ -180,6 +240,7 @@
   font-size: var(--text-sm);
   text-align: left;
   cursor: pointer;
+  transition: background var(--transition-fast);
 }
 
 .workspaceCreateButton:hover {
@@ -205,7 +266,7 @@
   min-width: 0;
   padding: var(--space-2);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font: inherit;
@@ -215,7 +276,7 @@
 .workspaceCreateSubmit {
   padding: var(--space-2);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-primary-700);
   color: white;
   font: inherit;
@@ -237,20 +298,20 @@
 .nav {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 0;
+  padding: 16px 0 10px;
 }
 
 .navSection {
-  padding: 8px 16px;
+  padding: 6px 14px 10px;
 }
 
 .navSectionLabel {
   font-size: 0.6875rem;
   font-weight: var(--font-semibold);
-  color: rgba(230, 239, 231, 0.42);
+  color: rgba(230, 239, 231, 0.4);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 8px 11px;
+  letter-spacing: 0.1em;
+  padding: 8px 12px 6px;
 }
 
 .navLink {
@@ -258,25 +319,25 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 9px 11px;
+  padding: 10px 12px;
   margin: 2px 0;
-  border-radius: 8px;
-  color: rgba(240, 246, 240, 0.7);
+  border-radius: 11px;
+  color: rgba(240, 246, 240, 0.72);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
 }
 
 .navLink:hover {
   color: var(--color-text-inverse);
-  background: rgba(255, 255, 255, 0.075);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .navLinkActive {
   color: var(--color-text-inverse);
-  background: rgba(191, 221, 176, 0.13);
-  box-shadow: inset 2px 0 0 #a8c98d;
+  background: linear-gradient(90deg, rgba(191, 221, 176, 0.18), rgba(191, 221, 176, 0.08));
+  box-shadow: inset 3px 0 0 #b7d4a2;
 }
 
 .navIcon {
@@ -291,31 +352,31 @@
 }
 
 .sidebarFooter {
-  padding: 14px 20px 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  padding: 16px 20px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sampleBadge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: 6px 9px;
-  background: rgba(190, 217, 178, 0.08);
-  border: 1px solid rgba(190, 217, 178, 0.14);
-  border-radius: 6px;
+  padding: 7px 10px;
+  background: rgba(190, 217, 178, 0.1);
+  border: 1px solid rgba(190, 217, 178, 0.16);
+  border-radius: 999px;
   font-size: 0.625rem;
-  color: #bfd5ad;
+  color: #c5dcb6;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   font-weight: var(--font-semibold);
 }
 
-/* Mobile overlay */
 .overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(8, 16, 13, 0.46);
+  backdrop-filter: blur(4px);
   z-index: 99;
 }
 
@@ -325,15 +386,16 @@
   top: var(--space-3);
   left: var(--space-3);
   z-index: 101;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   background: var(--color-bg-sidebar);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-md);
   color: var(--color-text-inverse);
   cursor: pointer;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-md);
 }
 
 @media (max-width: 768px) {

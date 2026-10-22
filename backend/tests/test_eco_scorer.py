@@ -174,6 +174,71 @@ def test_analysis_api_validates_image_and_returns_real_empty_result(scorer_clien
     assert invalid.status_code == 400
 
 
+def test_analysis_returns_preliminary_knowledge_guidance_for_detected_objects(
+    scorer_client, db_session, monkeypatch
+):
+    from types import SimpleNamespace
+
+    from app.api import eco_scorer as scorer_api
+
+    rules = load_rules(Path(__file__).resolve().parents[2])
+    monkeypatch.setattr(
+        scorer_api,
+        "_rules_and_score",
+        lambda: (rules, map_class, score_observations),
+    )
+    monkeypatch.setattr(
+        scorer_api,
+        "_get_detector",
+        lambda: SimpleNamespace(
+            detect_image=lambda _image: [
+                SimpleNamespace(
+                    class_label="bottle",
+                    confidence=0.91,
+                    bbox={"x": 1, "y": 2, "w": 10, "h": 20},
+                )
+            ]
+        ),
+    )
+    db_session.add(KnowledgeArticle(
+        id="kb-007",
+        title="Waste hierarchy and segregation",
+        category="waste-circular",
+        summary="Prefer reuse, then follow local recycling rules.",
+        content="Article content",
+        audience=json.dumps(["individual"]),
+        applicability_conditions="[]",
+        implementation_steps=json.dumps(["Confirm local rules"]),
+        limitations=json.dumps(["Local rules vary"]),
+        source_title="CPCB",
+        source_publisher="CPCB",
+        source_url="",
+        publication_date="",
+        last_verified_date="",
+        verification_status="verified",
+        tags=json.dumps(["waste"]),
+        is_active=True,
+    ))
+    db_session.commit()
+
+    response = scorer_client(
+        "/api/eco-scorer/analyse?workspace_id=ws-upload",
+        content=image_bytes(),
+        headers={"Content-Type": "image/png"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["detections"][0]["status"] == "detected"
+    assert payload["eco_score"]["score"] is None
+    assert payload["recommendations"][0]["article_id"] == "kb-007"
+    assert payload["recommendations"][0]["requires_confirmation"] is True
+    assert payload["recommendations"][0]["implementation_steps"] == ["Confirm local rules"]
+    from app.api.eco_scorer import save_to_planner
+
+    assert save_to_planner(payload["assessment_id"], db_session)["count"] == 0
+
+
 def test_analysis_api_rejects_oversized_stream(scorer_client, monkeypatch):
     from app.core.config import settings
 
@@ -253,8 +318,8 @@ def seed_energy_assessment(db: Session):
             applicability_conditions="[]",
             implementation_steps=json.dumps(["Review measured use"]),
             limitations=json.dumps(["Use device-level measurements for precision"]),
-            source_title="EcoTwin",
-            source_publisher="EcoTwin",
+            source_title="EcoPath.AI",
+            source_publisher="EcoPath.AI",
             source_url="",
             publication_date="",
             last_verified_date="",
@@ -331,6 +396,7 @@ def test_confirmed_detection_retrieves_private_kb_and_saves_planner_action(db_se
     )
     assert updated["eco_score"]["score"] is None
     assert updated["recommendations"][0]["article_id"] == "kb-007"
+    assert updated["recommendations"][0]["requires_confirmation"] is False
     assert updated["recommendations"][0]["implementation_steps"] == ["Confirm local rules"]
 
     saved = save_to_planner("eco-test", db_session)

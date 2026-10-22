@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { createAction, deleteAction as deleteActionRequest, getActions, getRecommendations, updateAction } from '@/services/api';
 import { formatINR } from '@/utils/currency';
@@ -186,13 +187,14 @@ export default function ActionPlanner() {
   const [resultFormData, setResultFormData] = useState<
     Record<
       string,
-      {
+      Partial<{
         actualExpenditure: string;
         actualSavings: string;
         notes: string;
-      }
+      }>
     >
   >({});
+  const [savingResultId, setSavingResultId] = useState<string | null>(null);
 
   // Ranking transparency expandable details
   const [showTransparencyWeights, setShowTransparencyWeights] = useState(false);
@@ -307,24 +309,63 @@ export default function ActionPlanner() {
 
   // Handle Saving Results for Completed Action
   const handleSaveResult = async (actionId: string) => {
+    if (savingResultId) return;
     const form = resultFormData[actionId];
-    if (!form) return;
     const action = actions.find((item) => item.id === actionId);
     if (!action) return;
+
+    const expenditureInput = form?.actualExpenditure ?? (
+      action.actualExpenditure ? String(action.actualExpenditure.amount) : ''
+    );
+    const savingsInput = form?.actualSavings ?? (
+      action.actualSavings ? String(action.actualSavings.amount) : ''
+    );
+    const notesInput = form?.notes?.trim() ?? '';
+    const parseAmount = (value: string, label: string): number | null => {
+      if (!value.trim()) return null;
+      const amount = Number(value);
+      if (!Number.isFinite(amount) || amount < 0) {
+        throw new Error(`${label} must be a valid non-negative amount.`);
+      }
+      return amount;
+    };
+
     try {
+      const actualExpenditure = parseAmount(expenditureInput, 'Actual expenditure');
+      const actualSavings = parseAmount(savingsInput, 'Monthly savings');
+      if (actualExpenditure === null && actualSavings === null && !notesInput) {
+        throw new Error('Enter an expenditure, monthly savings, or verification note before saving.');
+      }
+
+      const existingNotes = action.notes.trim();
+      const updatedNotes = notesInput && !existingNotes.split('\n').includes(notesInput)
+        ? [existingNotes, notesInput].filter(Boolean).join('\n')
+        : existingNotes;
+
+      setSavingResultId(actionId);
       const updated = await updateAction(actionId, {
-        ...(form.actualExpenditure ? { actual_expenditure_amount: Number(form.actualExpenditure) } : {}),
-        ...(form.actualSavings ? { actual_savings_amount: Number(form.actualSavings) } : {}),
-        ...(form.notes.trim() ? { notes: [action.notes, form.notes.trim()].filter(Boolean).join('\n') } : {}),
+        ...(actualExpenditure !== null ? { actual_expenditure_amount: actualExpenditure } : {}),
+        ...(actualSavings !== null ? { actual_savings_amount: actualSavings } : {}),
+        ...(notesInput ? { notes: updatedNotes } : {}),
       }, currentWorkspace.id);
       setActions((prev) => prev.map((item) => item.id === actionId ? updated : item));
       setExpandedRecordResults((prev) => ({ ...prev, [actionId]: false }));
+      setResultFormData((prev) => ({
+        ...prev,
+        [actionId]: {
+          actualExpenditure: updated.actualExpenditure ? String(updated.actualExpenditure.amount) : '',
+          actualSavings: updated.actualSavings ? String(updated.actualSavings.amount) : '',
+          notes: '',
+        },
+      }));
       setToastMessage({ text: 'User-reported financial results saved.', type: 'success' });
     } catch (error) {
       setToastMessage({
         text: error instanceof Error ? error.message : 'Could not save the reported results.',
         type: 'info',
       });
+    } finally {
+      setSavingResultId(null);
     }
   };
 
@@ -584,7 +625,28 @@ export default function ActionPlanner() {
         </div>
 
         <div className={styles.recGrid}>
-          {recommendations.map((rec) => {
+          {recommendations.length === 0 ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateIcon}>
+                <ClipboardCheck size={24} />
+              </div>
+              <h3 className={styles.emptyStateTitle}>
+                {actions.length > 0
+                  ? 'No additional recommendations right now'
+                  : 'No recommendations match your resource data yet'}
+              </h3>
+              <p className={styles.emptyText}>
+                {actions.length > 0
+                  ? `Your ${actions.length} saved action${actions.length === 1 ? '' : 's'} remain in Your Action Plan below. New recommendations appear when your resource measurements support another action.`
+                  : 'Review your resource entries and add complete monthly measurements for a supported category. Only relevant actions are suggested; no default action is assumed.'}
+              </p>
+              {actions.length === 0 && (
+                <Link to="/resources" className={styles.emptyStateLink}>
+                  Review Resources
+                </Link>
+              )}
+            </div>
+          ) : recommendations.map((rec) => {
             const catMeta = getCategoryMeta(rec.category);
             const CatIcon = catMeta.icon;
             const diffBadge = getDifficultyBadge(rec.difficulty);
@@ -618,8 +680,11 @@ export default function ActionPlanner() {
                 {/* Title */}
                 <h3 className={styles.recTitle}>{rec.title}</h3>
 
-                {/* Problem or Opportunity */}
-                <p className={styles.recProblem}>{rec.problemOrOpportunity}</p>
+                <div className={styles.recommendedNextStep}>
+                  <strong>Next step</strong>
+                  <p>{rec.implementationSteps.find((step) => step.trim()) || rec.nextStep}</p>
+                  <span>{rec.inputBasis}</span>
+                </div>
 
                 {/* Metrics Box (Savings, Environmental Benefit, Upfront Cost) */}
                 <div className={styles.metricsGrid}>
@@ -1085,9 +1150,11 @@ export default function ActionPlanner() {
                           <label className={styles.formLabel}>Actual Expenditure (₹ INR)</label>
                           <input
                             type="number"
+                            min="0"
                             step="0.01"
                             className={styles.formInput}
                             placeholder="Enter rupee amount"
+                            aria-label="Actual expenditure in Indian rupees"
                             value={resultFormData[action.id]?.actualExpenditure ?? (action.actualExpenditure?.amount ?? '')}
                             onChange={(e) => handleFormChange(action.id, 'actualExpenditure', e.target.value)}
                           />
@@ -1097,9 +1164,11 @@ export default function ActionPlanner() {
                           <label className={styles.formLabel}>Monthly Savings (₹ INR/mo)</label>
                           <input
                             type="number"
+                            min="0"
                             step="0.01"
                             className={styles.formInput}
                             placeholder="Enter rupee amount"
+                            aria-label="Monthly savings in Indian rupees"
                             value={resultFormData[action.id]?.actualSavings ?? (action.actualSavings?.amount ?? '')}
                             onChange={(e) => handleFormChange(action.id, 'actualSavings', e.target.value)}
                           />
@@ -1110,7 +1179,9 @@ export default function ActionPlanner() {
                           <input
                             type="text"
                             className={styles.formInput}
+                            maxLength={1000}
                             placeholder="Describe the source of your reported result."
+                            aria-label="Verification notes and findings"
                             value={resultFormData[action.id]?.notes ?? ''}
                             onChange={(e) => handleFormChange(action.id, 'notes', e.target.value)}
                           />
@@ -1119,10 +1190,11 @@ export default function ActionPlanner() {
 
                       <button
                         className={styles.recordSaveBtn}
-                        onClick={() => handleSaveResult(action.id)}
+                        onClick={() => void handleSaveResult(action.id)}
                         type="button"
+                        disabled={savingResultId !== null}
                       >
-                        <Check size={14} /> Save Results
+                        <Check size={14} /> {savingResultId === action.id ? 'Saving…' : 'Save Results'}
                       </button>
                     </div>
                   )}

@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Impact Ledger API Routes
+EcoPath.AI — Impact Ledger API Routes
 """
 from typing import Optional
 

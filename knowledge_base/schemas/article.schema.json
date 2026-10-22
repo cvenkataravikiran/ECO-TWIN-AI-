@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "EcoTwin knowledge article",
+  "title": "EcoPath.AI knowledge article",
   "type": "object",
   "required": ["id", "title", "category", "summary", "content", "source_title", "source_publisher", "verification_status"],
   "properties": {

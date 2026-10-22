@@ -13,8 +13,8 @@
     "Export CSV/PDF for mentors without mixing household data"
   ],
   "limitations": ["Memberships and fine-grained roles are a thin model in this MVP"],
-  "source_title": "EcoTwin workspace method",
-  "source_publisher": "EcoTwin AI",
+  "source_title": "EcoPath.AI workspace method",
+  "source_publisher": "EcoPath.AI",
   "source_url": "",
   "publication_date": "2026-10-16",
   "last_verified_date": "2026-10-16",

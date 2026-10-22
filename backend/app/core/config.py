@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Application Configuration
+EcoPath.AI — Application Configuration
 Reads settings from environment variables with safe defaults.
 """
 
@@ -7,14 +7,23 @@ import os
 from pathlib import Path
 from typing import List
 
-# Project root = ecotwin-ai/ (parent of backend/)
+# Project root = ecopath-ai/ (parent of backend/)
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 _DEFAULT_DB = _PROJECT_ROOT / "data" / "ecotwin.db"
 
 
+def _load_cors_origins() -> List[str]:
+    origins = (
+        os.getenv("CORS_ORIGINS")
+        or os.getenv("CORS_ORIGIN")
+        or "http://localhost:5173,http://127.0.0.1:5173"
+    )
+    return [origin.strip().rstrip("/") for origin in origins.split(",") if origin.strip()]
+
+
 class Settings:
     project_root: Path = _PROJECT_ROOT
-    app_name: str = "EcoTwin AI"
+    app_name: str = "EcoPath.AI"
     version: str = "1.1.0"
     debug: bool = os.getenv("DEBUG", "false").lower() == "true"
     default_currency: str = os.getenv("DEFAULT_CURRENCY", "INR")
@@ -27,9 +36,7 @@ class Settings:
         f"sqlite:///{_DEFAULT_DB.as_posix()}",
     )
 
-    cors_origins: List[str] = [
-        o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
-    ]
+    cors_origins: List[str] = _load_cors_origins()
 
     secret_key: str = os.getenv("SECRET_KEY", "CHANGE-THIS-IN-PRODUCTION")
     api_token: str = os.getenv("API_TOKEN", "")

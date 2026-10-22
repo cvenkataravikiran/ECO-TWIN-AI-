@@ -3,7 +3,7 @@
   "title": "What the Eco-Scorer can and cannot see",
   "category": "visual-assessment",
   "summary": "The optional Eco-Scorer runs a local COCO object detector and returns object labels, bounding boxes, and model confidence. It cannot assess sustainability performance from appearance and does not calculate an environmental score.",
-  "content": "Upload a JPEG, PNG, or WebP photo (maximum 10 MB) when the local model is enabled. The image is processed in memory by the configured EcoTwin backend and is not retained. Detection metadata and reviewed labels are saved.\n\nConfirm, correct, or dismiss each detection. Confirmed mapped objects can retrieve related articles from the private knowledge base and can be saved to the Action Planner. Object presence is not evidence of environmental benefit or harm, so the application withholds a numeric environmental score.\n\nA photo cannot reliably establish lifecycle emissions, actual electricity use, product composition, or recyclability in every location. Never upload ID documents, electricity bills with account numbers, or photos of people who have not agreed.",
+  "content": "Upload a JPEG, PNG, or WebP photo (maximum 10 MB) when the local model is enabled. The image is processed in memory by the configured EcoPath.AI backend and is not retained. Detection metadata and reviewed labels are saved.\n\nConfirm, correct, or dismiss each detection. Confirmed mapped objects can retrieve related articles from the curated knowledge base and can be saved to the Action Planner. Object presence is not evidence of environmental benefit or harm, so the application withholds a numeric environmental score.\n\nA photo cannot reliably establish lifecycle emissions, actual electricity use, product composition, or recyclability in every location. Never upload ID documents, electricity bills with account numbers, or photos of people who have not agreed.",
   "audience": ["individual", "household", "business"],
   "applicability_conditions": ["Has a photo of a supported indoor scene"],
   "implementation_steps": [
@@ -17,8 +17,8 @@
     "Detector confidence is not a calibrated probability or sustainability-confidence measure",
     "No generative AI vision API is used"
   ],
-  "source_title": "EcoTwin Eco-Scorer methodology",
-  "source_publisher": "EcoTwin AI",
+  "source_title": "EcoPath.AI Eco-Scorer methodology",
+  "source_publisher": "EcoPath.AI",
   "source_url": "",
   "publication_date": "2026-10-16",
   "last_verified_date": "2026-10-16",

@@ -17,7 +17,7 @@ Install backend dependencies from `backend` with `pip install -r requirements.tx
 1. The API accepts JPEG, PNG, and WebP only, and checks both the declared media type and decoded image format.
 2. The request is read in bounded chunks and rejected above 10 MiB. Decompression-bomb-sized images are rejected; valid larger dimensions are resized to a maximum 1920-pixel side.
 3. EXIF orientation is applied, then the image is resized/letterboxed for the detector.
-4. The image is processed in memory by the configured EcoTwin backend and is not written to disk or retained. The assessment stores detections, confidence values, bounding boxes, review state, and model metadata, but not the image bytes or original filename.
+4. The image is processed in memory by the configured EcoPath.AI backend and is not written to disk or retained. The assessment stores detections, confidence values, bounding boxes, review state, and model metadata, but not the image bytes or original filename.
 5. Never upload sensitive documents or photos of people without their consent.
 
 ## Detection and confidence
@@ -36,7 +36,9 @@ The displayed review coverage is:
 review coverage = (confirmed + corrected + dismissed detections) / all detections
 ```
 
-This is only a progress measure for reviewing model output; it is not an environmental score, evidence of impact, or model accuracy. With no detections it is zero. Confirmed/corrected labels with an explicit private-knowledge-base article mapping retrieve that article and its limitations through the backend. A user may save those recommendations to the existing Action Planner. No recommendation is saved for an unsupported label or absent article.
+This is only a progress measure for reviewing model output; it is not an environmental score, evidence of impact, or model accuracy. With no detections it is zero. Detected labels with an explicit private-knowledge-base article mapping retrieve preliminary guidance immediately after analysis. The UI marks it as preliminary until the user confirms the object. Confirmed/corrected labels retain their article and limitations, and only confirmed/corrected observations can be saved to the existing Action Planner. No recommendation is returned for an unsupported label or absent article.
+
+These suggestions are local object detection plus deterministic mapping to curated knowledge-base articles; no generative AI or remote AI service is used. Guidance may suggest conditional actions such as reuse, repair, or checking local recycling rules, but a photo alone cannot determine whether an item is harmful, reusable, recyclable, or environmentally preferable.
 
 For confirmed labels explicitly mapped to the standby-power article (`kb-002`), Eco-Scorer may also show the existing deterministic `rec-002` estimate when the workspace has a measured electricity record in kWh covering the latest complete calendar month, with a consistent recorded currency and bill cost. The engine's documented standby fraction and shutoff assumptions produce an estimate from that separate workspace record; the photo provides no electricity measurement. The UI shows the period, baseline, formula, assumptions, confidence, and missing device-level data. Estimated, partial-month, unsupported-unit, or otherwise incomplete records do not trigger this calculation. The same basis and assumptions are carried into the saved Action Planner notes.
 

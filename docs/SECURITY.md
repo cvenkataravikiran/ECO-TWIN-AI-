@@ -1,4 +1,4 @@
-# EcoTwin AI — Security
+# EcoPath.AI — Security
 
 ## Architecture Security Principles
 

@@ -1,51 +1,51 @@
 /* ============================================================
-   EcoTwin AI — Design System
-   
+   EcoPath.AI — Design System
+
    Visual identity: editorial sustainability workspace
-   Warm ivory backgrounds, deep forest greens, restrained accents
+   Warm ivory surfaces, deep forest greens, glass-soft cards
    ============================================================ */
 
 /* --- Google Fonts --- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 /* --- CSS Custom Properties (Design Tokens) --- */
 :root {
   /* ---- Color Palette ---- */
-  
+
   /* Primary: Deep Forest Green */
-  --color-primary-50: #f0f7f4;
-  --color-primary-100: #d6ebe1;
-  --color-primary-200: #aed8c4;
-  --color-primary-300: #7cbea1;
-  --color-primary-400: #4f9f7c;
-  --color-primary-500: #2d7d5f;
-  --color-primary-600: #1f6349;
-  --color-primary-700: #1a4f3c;
-  --color-primary-800: #163f31;
-  --color-primary-900: #0f2d22;
-  --color-primary-950: #081a14;
+  --color-primary-50: #f3f8f4;
+  --color-primary-100: #dceee2;
+  --color-primary-200: #b7dcc6;
+  --color-primary-300: #86c3a3;
+  --color-primary-400: #56a57e;
+  --color-primary-500: #348864;
+  --color-primary-600: #246c50;
+  --color-primary-700: #1d5641;
+  --color-primary-800: #184536;
+  --color-primary-900: #12352a;
+  --color-primary-950: #0b221b;
 
   /* Backgrounds: restrained warm neutrals */
-  --color-bg-primary: #f7f7f3;
-  --color-bg-secondary: #eff1eb;
-  --color-bg-tertiary: #e7eae3;
-  --color-bg-card: #ffffff;
-  --color-bg-sidebar: #172d26;
-  --color-bg-sidebar-hover: #203a31;
-  --color-bg-sidebar-active: #29483a;
+  --color-bg-primary: #f4f5ef;
+  --color-bg-secondary: #eceee7;
+  --color-bg-tertiary: #e3e7df;
+  --color-bg-card: #fffcf7;
+  --color-bg-sidebar: #12241e;
+  --color-bg-sidebar-hover: #1a342b;
+  --color-bg-sidebar-active: #234438;
 
   /* Text */
-  --color-text-primary: #202a24;
-  --color-text-secondary: #59655d;
-  --color-text-tertiary: #78847c;
-  --color-text-inverse: #f7f8f5;
-  --color-text-muted: #99a39c;
+  --color-text-primary: #1b2620;
+  --color-text-secondary: #536058;
+  --color-text-tertiary: #738078;
+  --color-text-inverse: #f6f8f3;
+  --color-text-muted: #96a098;
 
   /* Accents */
   --color-accent-lime: #84cc16;
   --color-accent-lime-soft: #ecfccb;
-  --color-accent-sage: #94a89b;
-  --color-accent-sage-soft: #e8ede9;
+  --color-accent-sage: #8fa394;
+  --color-accent-sage-soft: #e7eee8;
   --color-accent-earth: #b8860b;
   --color-accent-earth-soft: #fef3c7;
   --color-accent-sky: #0ea5e9;
@@ -64,13 +64,16 @@
   --color-info-soft: #dbeafe;
 
   /* Borders */
-  --color-border-light: #e3e7e0;
-  --color-border-medium: #cfd6ce;
+  --color-border-light: #e4e8e0;
+  --color-border-medium: #cdd4ca;
   --color-border-focus: #2d7d5f;
 
+  /* Texture */
+  --grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+
   /* ---- Typography ---- */
-  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-serif: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
 
   --text-xs: 0.75rem;      /* 12px */
   --text-sm: 0.8125rem;    /* 13px */
@@ -94,7 +97,7 @@
 
   --tracking-tight: -0.02em;
   --tracking-normal: 0;
-  --tracking-wide: 0.02em;
+  --tracking-wide: 0.04em;
 
   /* ---- Spacing ---- */
   --space-0: 0;
@@ -111,29 +114,29 @@
   --space-20: 5rem;      /* 80px */
 
   /* ---- Border Radius ---- */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 0.875rem;
-  --radius-2xl: 1.125rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
   /* ---- Shadows ---- */
-  --shadow-xs: 0 1px 2px rgba(25, 40, 31, 0.035);
-  --shadow-sm: 0 1px 3px rgba(25, 40, 31, 0.05), 0 1px 2px rgba(25, 40, 31, 0.035);
-  --shadow-md: 0 4px 8px rgba(25, 40, 31, 0.055), 0 1px 3px rgba(25, 40, 31, 0.035);
-  --shadow-lg: 0 12px 24px rgba(25, 40, 31, 0.08), 0 3px 8px rgba(25, 40, 31, 0.04);
-  --shadow-xl: 0 22px 36px rgba(25, 40, 31, 0.1), 0 8px 12px rgba(25, 40, 31, 0.04);
+  --shadow-xs: 0 1px 2px rgba(18, 36, 30, 0.04);
+  --shadow-sm: 0 1px 2px rgba(18, 36, 30, 0.04), 0 8px 20px rgba(18, 36, 30, 0.045);
+  --shadow-md: 0 8px 24px rgba(18, 36, 30, 0.08), 0 2px 6px rgba(18, 36, 30, 0.04);
+  --shadow-lg: 0 18px 40px rgba(18, 36, 30, 0.1), 0 4px 12px rgba(18, 36, 30, 0.05);
+  --shadow-xl: 0 28px 56px rgba(18, 36, 30, 0.14), 0 10px 18px rgba(18, 36, 30, 0.05);
 
   /* ---- Transitions ---- */
-  --transition-fast: 120ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 350ms ease;
+  --transition-fast: 140ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-base: 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-slow: 380ms cubic-bezier(0.22, 1, 0.36, 1);
 
   /* ---- Layout ---- */
-  --sidebar-width: 260px;
+  --sidebar-width: 268px;
   --sidebar-collapsed-width: 72px;
-  --header-height: 56px;
+  --header-height: 60px;
   --content-max-width: 1440px;
 }
 
@@ -152,6 +155,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -161,6 +165,10 @@ body {
   line-height: var(--leading-normal);
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
+  background-image:
+    radial-gradient(1200px 520px at 88% -8%, rgba(52, 136, 100, 0.07), transparent 58%),
+    radial-gradient(900px 420px at -8% 108%, rgba(184, 134, 11, 0.04), transparent 52%);
+  background-attachment: fixed;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -174,7 +182,7 @@ h1, h2, h3, h4, h5, h6 {
 .heading-display {
   font-family: var(--font-serif);
   font-weight: var(--font-regular);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
 }
 
 a {
@@ -255,8 +263,8 @@ textarea {
    ============================================================ */
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -266,6 +274,8 @@ textarea {
 ::-webkit-scrollbar-thumb {
   background-color: var(--color-border-medium);
   border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -288,7 +298,7 @@ textarea {
    ============================================================ */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -308,7 +318,7 @@ textarea {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease forwards;
+  animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .animate-pulse {

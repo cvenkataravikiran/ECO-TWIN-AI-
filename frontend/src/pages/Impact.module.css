@@ -60,28 +60,32 @@
 }
 
 .summaryGrid {
-  gap: 12px;
+  gap: 14px;
 }
 
 .summaryCard,
 .entryCard {
-  border-radius: 10px;
-  box-shadow: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
 }
 
 .entryCard {
-  border-left-width: 2px;
+  border-left-width: 3px;
 }
 
 .legend {
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-light);
 }
 
 .comparison {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--color-border-light);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
+}
+
+.select {
+  border-radius: var(--radius-md);
 }
 
 @media (max-width: 700px) {

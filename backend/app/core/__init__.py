@@ -1,1 +1,1 @@
-"""EcoTwin AI — Core Package"""
+"""EcoPath.AI core package."""

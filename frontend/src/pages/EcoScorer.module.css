@@ -24,6 +24,17 @@
 .privacyNotice { padding: 0 var(--space-5) var(--space-3); font-size: var(--text-xs); color: var(--color-text-tertiary); }
 .recommendationCard { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); color: var(--color-text-secondary); font-size: var(--text-sm); line-height: var(--leading-relaxed); }
 .recommendationTitle { color: var(--color-text-primary); font-weight: var(--font-semibold); }
+.recommendationAction { color: var(--color-text-primary); margin: 0; }
+.pathwayCard { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-primary-200); border-radius: var(--radius-lg); background: var(--color-primary-50); }
+.pathwayConfirmed { display: inline-flex; margin-left: var(--space-2); padding: 2px 8px; border-radius: var(--radius-full); background: var(--color-success-soft); color: var(--color-success); font-size: var(--text-xs); font-weight: var(--font-medium); vertical-align: middle; }
+.pathwayLabel { color: var(--color-text-primary); font-size: var(--text-sm); font-weight: var(--font-medium); }
+.pathwaySelect, .pathwayNote { width: 100%; padding: var(--space-3); border: 1px solid var(--color-border-light); border-radius: var(--radius-md); background: var(--color-bg-card); color: var(--color-text-primary); font: inherit; }
+.pathwayNote { min-height: 76px; resize: vertical; line-height: var(--leading-relaxed); }
+.pathwaySelect:focus, .pathwayNote:focus { outline: 2px solid var(--color-border-focus); outline-offset: 1px; }
+.pathwaySelect:disabled, .pathwayNote:disabled { opacity: 0.7; }
+.pathwaySuggestion { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3); border-left: 3px solid var(--color-primary-500); border-radius: var(--radius-sm); background: var(--color-bg-card); color: var(--color-text-secondary); font-size: var(--text-sm); line-height: var(--leading-relaxed); }
+.pathwaySuggestion strong { color: var(--color-text-primary); }
+.pathwayDisclaimer { color: var(--color-text-tertiary); font-size: var(--text-xs); line-height: var(--leading-relaxed); }
 .calculationNote { padding: var(--space-3); border-left: 3px solid var(--color-primary-500); background: var(--color-bg-secondary); border-radius: var(--radius-sm); }
 .calculationNote strong { color: var(--color-text-primary); }
 .calculationNote p { margin-top: var(--space-2); }
@@ -128,8 +139,8 @@
   min-height: 260px;
   padding: clamp(28px, 5vw, 60px) 24px;
   border-width: 1px;
-  border-radius: 12px;
-  background: #f0f3ed;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(180deg, #f3f7f1, #eef2ea);
 }
 
 .dropZone:hover,
@@ -140,15 +151,25 @@
 .infoCard,
 .previewCard,
 .imagePanel,
-.recommendationCard {
-  border-radius: 10px;
-  box-shadow: none;
+.recommendationCard,
+.panelSection,
+.availability {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
 }
 
 .scoreCircle {
   padding: var(--space-4);
   background: var(--color-bg-secondary);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
+}
+
+.uploadBtn,
+.analyseBtn,
+.saveBtn,
+.resetBtn,
+.secondaryButton {
+  border-radius: var(--radius-md);
 }
 
 @media (max-width: 620px) {

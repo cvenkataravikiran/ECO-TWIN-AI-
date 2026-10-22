@@ -1,5 +1,5 @@
 /* ============================================================
-   EcoTwin AI — Core Type Definitions
+   EcoPath.AI — Core Type Definitions
    ============================================================ */
 
 // --- Workspace ---
@@ -65,6 +65,8 @@ export interface Recommendation {
   title: string;
   problemOrOpportunity: string;
   relevanceExplanation: string;
+  nextStep: string;
+  inputBasis: string;
   knowledgeArticleId: string;
   guidanceSummary: string;
   guidanceLimitations: string[];

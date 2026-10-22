@@ -1,6 +1,6 @@
-# EcoTwin AI — Calculation Methods
+# EcoPath.AI — Calculation Methods
 
-All calculations in EcoTwin AI use documented, deterministic formulas. This document describes each calculation module, its inputs, outputs, assumptions, and limitations.
+All calculations in EcoPath.AI use documented, deterministic formulas. This document describes each calculation module, its inputs, outputs, assumptions, and limitations.
 
 ## Principles
 

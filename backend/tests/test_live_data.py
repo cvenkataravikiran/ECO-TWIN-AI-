@@ -27,6 +27,7 @@ from app.api.eco_scorer import (
     ObservationUpdate,
 )
 from app.api.impact import list_impact_entries
+from app.api.knowledge import list_articles
 from app.api.recommendations import RecommendationRequest, generate as generate_recommendation_api
 from app.api.reports import export_csv, generate_pdf, generate_report_alias
 from app.api.resources import (
@@ -36,13 +37,37 @@ from app.api.resources import (
     list_resources,
     update_resource,
 )
-from app.api.workspaces import WorkspaceCreate, create_workspace, list_workspaces
+from app.api.workspaces import WorkspaceCreate, create_workspace, delete_workspace, list_workspaces
 from app.db.database import Base
 from app.models import ResourceRecord, Workspace
 from app.models.action_plan import Action
 from app.models.comparison import SavedComparison
 from app.models.eco_assessment import EcoAssessment, VisualObservation
 from app.services.knowledge_import import upsert_articles
+
+
+def test_category_guidance_api_is_mounted_and_filters_knowledge_articles(db_session):
+    from app.main import app
+
+    assert any(
+        route.path == "/api/knowledge/" and "GET" in route.methods
+        for route in app.routes
+    )
+    upsert_articles(db_session)
+
+    result = list_articles(
+        search=None,
+        category="home-energy",
+        audience=None,
+        page=1,
+        size=2,
+        db=db_session,
+    )
+
+    assert result["total"] >= 2
+    assert len(result["items"]) == 2
+    assert all(article["category"] == "home-energy" for article in result["items"])
+    assert all(article["implementation_steps"] for article in result["items"])
 
 
 @pytest.fixture
@@ -322,6 +347,103 @@ def test_recommendations_use_latest_measured_individual_workspace_electricity(db
     assert error.value.status_code == 404
 
 
+def test_empty_workspace_has_no_default_recommendations(db_session):
+    workspace = create_workspace(
+        WorkspaceCreate(name="Empty Recommendation Workspace", type="individual"),
+        db_session,
+    )
+
+    result = generate_recommendation_api(
+        RecommendationRequest(workspace_id=workspace["id"]),
+        db_session,
+    )
+
+    assert result["recommendations"] == []
+    assert result["total"] == 0
+
+
+def test_deleting_workspace_removes_its_data_and_preserves_other_workspaces(db_session):
+    workspace = create_workspace(
+        WorkspaceCreate(name="Workspace to delete", type="individual"),
+        db_session,
+    )
+    other_workspace = create_workspace(
+        WorkspaceCreate(name="Workspace to keep", type="individual"),
+        db_session,
+    )
+    db_session.add(ResourceRecord(
+        id="res-delete-workspace",
+        workspace_id=workspace["id"],
+        category="water",
+        description="Measured water",
+        quantity=100,
+        unit="L",
+        cost=0,
+        currency="INR",
+        period_start="2026-09-01",
+        period_end="2026-09-30",
+        measurement_type="measured",
+    ))
+    db_session.add(Action(
+        id="action-delete-workspace",
+        workspace_id=workspace["id"],
+        title="Test action",
+        category="water-nature",
+        status="planned",
+        planned_date="2026-10-01",
+    ))
+    db_session.add(SavedComparison(
+        id="comparison-delete-workspace",
+        workspace_id=workspace["id"],
+        scenario="water",
+        inputs_json="{}",
+        result_json="{}",
+    ))
+    assessment = EcoAssessment(
+        id="assessment-delete-workspace",
+        workspace_id=workspace["id"],
+        image_filename="test.jpg",
+        model_id="test-model",
+        model_version="1",
+        processing_time_ms=1,
+    )
+    assessment.observations.append(VisualObservation(
+        id="observation-delete-workspace",
+        class_label="bottle",
+        sustainability_category="recyclable",
+        confidence=0.9,
+        bbox_x=0.1,
+        bbox_y=0.1,
+        bbox_w=0.5,
+        bbox_h=0.5,
+    ))
+    db_session.add(assessment)
+    db_session.commit()
+
+    result = delete_workspace(workspace["id"], db_session)
+
+    assert result == {"deleted": True, "workspace_id": workspace["id"]}
+    assert db_session.get(Workspace, workspace["id"]) is None
+    assert db_session.query(ResourceRecord).filter_by(workspace_id=workspace["id"]).count() == 0
+    assert db_session.query(Action).filter_by(workspace_id=workspace["id"]).count() == 0
+    assert db_session.query(SavedComparison).filter_by(workspace_id=workspace["id"]).count() == 0
+    assert db_session.query(EcoAssessment).filter_by(workspace_id=workspace["id"]).count() == 0
+    assert db_session.get(VisualObservation, "observation-delete-workspace") is None
+    assert db_session.get(Workspace, other_workspace["id"]) is not None
+
+
+def test_demo_workspace_cannot_be_deleted(db_session):
+    demo = Workspace(id="ws-demo-protected-delete", name="Demo", type="individual", is_demo=True)
+    db_session.add(demo)
+    db_session.commit()
+
+    with pytest.raises(HTTPException) as error:
+        delete_workspace(demo.id, db_session)
+
+    assert error.value.status_code == 404
+    assert db_session.get(Workspace, demo.id) is not None
+
+
 def test_recommendations_use_measured_resource_categories_without_assuming_travel_mode(db_session):
     workspace = create_workspace(
         WorkspaceCreate(name="Resource Mix Business", type="business"),
@@ -377,6 +499,12 @@ def test_recommendations_use_measured_resource_categories_without_assuming_trave
     } <= recommendations.keys()
     assert "rec-004" not in recommendations
     assert "2500 L" in recommendations["rec-006"]["relevance_explanation"]
+    assert recommendations["rec-006"]["input_basis"] == "Water input: 2500 L/month."
+    assert recommendations["rec-006"]["next_step"] == (
+        "Check the latest water reading and inspect visible fixtures for unexplained changes."
+    )
+    assert recommendations["rec-007"]["input_basis"] == "Water input: 2500 L/month."
+    assert recommendations["rec-007"]["next_step"]
     assert all(item["estimated_monthly_savings"] is None for item in recommendations.values())
     assert all(item["environmental_estimate"] is None for item in recommendations.values())
     assert recommendations["rec-006"]["guidance_summary"]
@@ -413,18 +541,37 @@ def test_individual_workspace_action_lifecycle_is_persisted(db_session):
 
     updated = update_action(
         action["id"],
-        ActionUpdate(status="completed", completed_date="2026-10-17", actual_savings_amount=125),
+        ActionUpdate(
+            status="completed",
+            completed_date="2026-10-17",
+            actual_expenditure_amount=240,
+            actual_savings_amount=200,
+            notes="User reported from the latest bill.",
+        ),
         db_session,
     )
     assert updated["status"] == "completed"
-    assert updated["actual_savings_amount"] == 125
+    assert updated["actual_expenditure_amount"] == 240
+    assert updated["actual_savings_amount"] == 200
+    assert updated["notes"] == "User reported from the latest bill."
+    persisted = get_action(action["id"], db_session)
+    assert persisted["actual_expenditure_amount"] == 240
+    assert persisted["actual_savings_amount"] == 200
+    assert persisted["notes"] == "User reported from the latest bill."
     ledger = list_impact_entries(workspace["id"], None, db_session)
     assert ledger["total"] == 1
     assert ledger["items"][0]["title"] == "Measure standby power"
-    assert ledger["items"][0]["actual_value"] == 125
+    assert ledger["items"][0]["actual_value"] == 200
     assert ledger["items"][0]["data_source"] == "user-reported"
     assert delete_action(action["id"], db_session) is None
     assert list_actions(workspace["id"], None, db_session)["total"] == 0
+
+
+@pytest.mark.parametrize("field", ["actual_expenditure_amount", "actual_savings_amount"])
+@pytest.mark.parametrize("value", [-0.01, float("inf"), float("nan")])
+def test_action_results_reject_negative_or_non_finite_amounts(field, value):
+    with pytest.raises(ValidationError):
+        ActionUpdate(**{field: value})
 
 
 def test_demo_workspace_records_are_inaccessible_through_live_apis(db_session):

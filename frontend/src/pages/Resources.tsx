@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 
 import { useWorkspace } from '@/hooks/useWorkspace';
+import KnowledgeGuidance from '@/components/KnowledgeGuidance';
 import { createResource, deleteResource, getResources, updateResource } from '@/services/api';
 import type { ResourceRecord, ResourceCategory, MeasurementType } from '@/types';
 import styles from './Resources.module.css';
@@ -101,6 +102,17 @@ const CATEGORIES_LIST: ResourceCategory[] = [
   'shopping',
   'other',
 ];
+
+const GUIDANCE_CATEGORY_BY_RESOURCE: Record<ResourceCategory, string> = {
+  electricity: 'home-energy',
+  water: 'water-nature',
+  gas: 'home-energy',
+  travel: 'travel-transport',
+  food: 'food-kitchen',
+  waste: 'waste-circular',
+  shopping: 'shopping-products',
+  other: 'business-institutions',
+};
 
 const MEASUREMENT_TYPES: MeasurementType[] = ['measured', 'estimated', 'imported'];
 
@@ -311,14 +323,30 @@ export default function Resources() {
   }, [filteredRecords]);
 
   const qualityStats = useMemo(() => {
-    const total = filteredRecords.length;
-    if (total === 0) return { measuredPct: 0, measured: 0, estimated: 0, imported: 0 };
-    const measured = filteredRecords.filter((r) => r.measurementType === 'measured').length;
-    const estimated = filteredRecords.filter((r) => r.measurementType === 'estimated').length;
-    const imported = filteredRecords.filter((r) => r.measurementType === 'imported').length;
+    const total = workspaceRecords.length;
+    if (total === 0) return { measuredPct: 0, measured: 0, estimated: 0, imported: 0, total: 0 };
+    const measured = workspaceRecords.filter((r) => r.measurementType === 'measured').length;
+    const estimated = workspaceRecords.filter((r) => r.measurementType === 'estimated').length;
+    const imported = workspaceRecords.filter((r) => r.measurementType === 'imported').length;
     const measuredPct = Math.round((measured / total) * 100);
     return { measuredPct, measured, estimated, imported, total };
+  }, [workspaceRecords]);
+
+  const filteredQualityStats = useMemo(() => {
+    const total = filteredRecords.length;
+    if (total === 0) return { measuredPct: 0 };
+    const measured = filteredRecords.filter((record) => record.measurementType === 'measured').length;
+    return { measuredPct: Math.round((measured / total) * 100) };
   }, [filteredRecords]);
+
+  const latestFilteredRecord = useMemo(
+    () =>
+      filteredRecords.reduce<ResourceRecord | null>(
+        (latest, record) => (!latest || record.periodEnd > latest.periodEnd ? record : latest),
+        null,
+      ),
+    [filteredRecords],
+  );
 
   // Sorting header click handler
   const handleSort = (field: SortField) => {
@@ -658,7 +686,7 @@ export default function Resources() {
               </div>
             </div>
             <div className={styles.summaryValue}>
-              {qualityStats.measuredPct}% <span style={{ fontSize: 'var(--text-sm)', fontWeight: 400, color: 'var(--color-text-tertiary)' }}>measured</span>
+              {qualityStats.total ? `${qualityStats.measuredPct}%` : '—'} <span style={{ fontSize: 'var(--text-sm)', fontWeight: 400, color: 'var(--color-text-tertiary)' }}>measured</span>
             </div>
           </div>
           <div>
@@ -701,9 +729,31 @@ export default function Resources() {
                 </span>
               )}
             </div>
+            <div className={styles.summarySub}>
+                {qualityStats.total
+                  ? 'Workspace share by measurement type selected for each record'
+                  : 'Add resource records to calculate'}
+            </div>
           </div>
         </div>
       </section>
+
+      {filteredRecords.length > 0 && (
+        <KnowledgeGuidance
+          title="Recommendations for these resource results"
+          categories={[...new Set(filteredRecords.map((record) => GUIDANCE_CATEGORY_BY_RESOURCE[record.category]))].slice(0, 3)}
+          contextSummary={
+            `${filteredRecords.length} filtered record${filteredRecords.length === 1 ? '' : 's'} across ` +
+            `${uniqueCategoriesCount} resource categor${uniqueCategoriesCount === 1 ? 'y' : 'ies'}; ` +
+            `the latest is ${latestFilteredRecord ? `${CATEGORY_MAP[latestFilteredRecord.category].label}: ${latestFilteredRecord.quantity} ${latestFilteredRecord.unit} (${latestFilteredRecord.measurementType})` : 'not available'}; ` +
+            `${filteredQualityStats.measuredPct}% of filtered records are marked measured. ` +
+            (filteredQualityStats.measuredPct < 100
+              ? 'Prioritize measured readings when checking trends; estimates and imported values are not independently verified.'
+              : 'Use the category guidance below to choose a practical next step. These records alone do not calculate environmental savings.')
+          }
+          limit={3}
+        />
+      )}
 
       {/* 3. Filter Bar */}
       <section className={styles.filterCard} aria-label="Filter records">
@@ -1113,6 +1163,14 @@ export default function Resources() {
                         </option>
                       ))}
                     </select>
+                    <span className={styles.summarySub}>
+                      {formData.measurementType === 'measured'
+                        ? 'From a bill, meter, or direct measurement.'
+                        : formData.measurementType === 'estimated'
+                          ? 'Approximate value; counted separately from measured records.'
+                          : 'Imported value; not independently verified.'}
+                      {' '}This selection updates the Data Quality summary.
+                    </span>
                   </div>
 
                   {/* Description */}

@@ -25,7 +25,7 @@ def main() -> int:
         return 0
     print(f"Downloading YOLOX-Tiny (Apache 2.0) from:\n  {URL}")
     try:
-        request = urllib.request.Request(URL, headers={"User-Agent": "EcoTwin-AI-local-model-setup"})
+        request = urllib.request.Request(URL, headers={"User-Agent": "EcoPath-AI-local-model-setup"})
         with urllib.request.urlopen(request, timeout=60) as response:
             final_host = urlparse(response.geturl()).hostname
             if final_host not in {"github.com", "release-assets.githubusercontent.com"}:

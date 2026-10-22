@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Database Models
+EcoPath.AI — Database Models
 """
 from app.models.workspace import Workspace
 from app.models.resource_record import ResourceRecord

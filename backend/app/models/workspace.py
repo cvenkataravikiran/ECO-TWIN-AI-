@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Workspace SQLAlchemy Model
+EcoPath.AI — Workspace SQLAlchemy Model
 """
 from datetime import datetime
 from sqlalchemy import Column, String, Boolean, DateTime, Text

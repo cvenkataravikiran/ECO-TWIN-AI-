@@ -18,7 +18,9 @@ import {
   Plus,
   X,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { getEcoScorerStatus } from '@/services/api';
 import styles from './Sidebar.module.css';
@@ -32,17 +34,22 @@ const navSections = [
     ],
   },
   {
+    label: 'Understand & Explore',
+    items: [
+      { path: '/compare', label: 'Compare Options', icon: GitCompareArrows },
+      { path: '/circular-living', label: 'Circular Living', icon: Recycle },
+      { path: '/eco-scorer', label: 'Eco-Scorer', icon: Camera },
+    ],
+  },
+  {
     label: 'Plan & Act',
     items: [
       { path: '/action-planner', label: 'Action Planner', icon: Target },
-      { path: '/compare', label: 'Compare Options', icon: GitCompareArrows },
-      { path: '/eco-scorer', label: 'Eco-Scorer', icon: Camera },
     ],
   },
   {
     label: 'Track & Improve',
     items: [
-      { path: '/circular-living', label: 'Circular Living', icon: Recycle },
       { path: '/impact', label: 'Impact Ledger', icon: TrendingUp },
     ],
   },
@@ -56,6 +63,7 @@ const navSections = [
 ];
 
 export function Sidebar() {
+  const navigate = useNavigate();
   const {
     currentWorkspace,
     workspaces,
@@ -64,6 +72,7 @@ export function Sidebar() {
     reloadWorkspaces,
     switchWorkspace,
     createWorkspace,
+    deleteWorkspace,
   } = useWorkspace();
   const [wsDropdownOpen, setWsDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -73,6 +82,8 @@ export function Sidebar() {
   const [workspaceType, setWorkspaceType] = useState<'individual' | 'business'>('individual');
   const [workspaceError, setWorkspaceError] = useState('');
   const [workspaceSaving, setWorkspaceSaving] = useState(false);
+  const [deletingWorkspaceId, setDeletingWorkspaceId] = useState('');
+  const [workspaceDeleteError, setWorkspaceDeleteError] = useState('');
   const workspaceLabel = workspacesLoading
     ? 'Loading workspaces…'
     : workspacesError
@@ -124,6 +135,29 @@ export function Sidebar() {
     }
   };
 
+  const handleDeleteWorkspace = async (id: string, name: string) => {
+    const confirmed = window.confirm(
+      `Delete "${name}" permanently? Its resource records, actions, comparisons, and Eco-Scorer assessments will also be deleted. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingWorkspaceId(id);
+    setWorkspaceDeleteError('');
+    try {
+      await deleteWorkspace(id);
+      if (id === currentWorkspace.id && workspaces.length === 1) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Unable to delete workspace', error);
+      setWorkspaceDeleteError(
+        error instanceof Error ? error.message : 'Could not delete the workspace.',
+      );
+    } finally {
+      setDeletingWorkspaceId('');
+    }
+  };
+
   return (
     <>
       {/* Mobile toggle */}
@@ -151,7 +185,7 @@ export function Sidebar() {
             <div className={styles.brandMark}>
               <Leaf size={16} />
             </div>
-            <div className={styles.brandName}>EcoTwin AI</div>
+            <div className={styles.brandName}>EcoPath.AI</div>
           </div>
           <div className={styles.brandTagline}>India sustainability insights</div>
         </div>
@@ -195,26 +229,41 @@ export function Sidebar() {
                 </div>
               )}
               {workspaces.map((ws) => (
-                <button
-                  key={ws.id}
-                  className={`${styles.workspaceOption} ${
-                    ws.id === currentWorkspace.id ? styles.workspaceOptionActive : ''
-                  }`}
-                  onClick={() => handleSwitch(ws.id)}
-                >
-                  {ws.type === 'business' ? (
-                    <Building2 size={16} />
-                  ) : (
-                    <Home size={16} />
-                  )}
-                  <div>
-                    <div style={{ fontWeight: 500 }}>{ws.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
-                      {ws.type === 'business' ? 'Business workspace' : 'Personal workspace'}
+                <div className={styles.workspaceOptionRow} key={ws.id}>
+                  <button
+                    type="button"
+                    className={`${styles.workspaceOption} ${
+                      ws.id === currentWorkspace.id ? styles.workspaceOptionActive : ''
+                    }`}
+                    onClick={() => handleSwitch(ws.id)}
+                  >
+                    {ws.type === 'business' ? (
+                      <Building2 size={16} />
+                    ) : (
+                      <Home size={16} />
+                    )}
+                    <div className={styles.workspaceOptionText}>
+                      <div className={styles.workspaceOptionName}>{ws.name}</div>
+                      <div className={styles.workspaceOptionType}>
+                        {ws.type === 'business' ? 'Business workspace' : 'Personal workspace'}
+                      </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.workspaceDeleteButton}
+                    aria-label={`Delete workspace ${ws.name}`}
+                    title={`Delete ${ws.name}`}
+                    disabled={deletingWorkspaceId !== ''}
+                    onClick={() => void handleDeleteWorkspace(ws.id, ws.name)}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               ))}
+              {workspaceDeleteError && (
+                <p className={styles.workspaceCreateError} role="alert">{workspaceDeleteError}</p>
+              )}
               {creatingWorkspace ? (
                 <form className={styles.workspaceCreateForm} onSubmit={(event) => void handleCreateWorkspace(event)}>
                   <label className={styles.workspaceCreateLabel} htmlFor="new-workspace-name">Workspace name</label>

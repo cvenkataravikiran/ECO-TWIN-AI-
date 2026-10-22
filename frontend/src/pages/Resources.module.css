@@ -1,5 +1,5 @@
 /* ============================================================
-   EcoTwin AI — Resources & Expenses Styles
+   EcoPath.AI — Resources & Expenses Styles
    CSS Module for Resources page
    ============================================================ */
 
@@ -1101,25 +1101,41 @@
 }
 
 .summaryGrid {
-  gap: 12px;
+  gap: 14px;
+}
+
+.summaryCard,
+.filterCard,
+.tableCard,
+.modal {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
 }
 
 .summaryCard {
   min-height: 142px;
   padding: var(--space-5);
-  border-radius: 10px;
-  box-shadow: none;
 }
 
 .summaryCard:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(28, 48, 35, 0.07);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .addBtn,
-.exportBtn {
-  border-radius: 7px;
-  box-shadow: none;
+.exportBtn,
+.btnSave,
+.btnCancel,
+.btnDanger,
+.searchInput,
+.selectInput,
+.inputField,
+.textareaField {
+  border-radius: var(--radius-md);
+}
+
+.addBtn {
+  box-shadow: var(--shadow-sm);
 }
 
 @media (max-width: 900px) {

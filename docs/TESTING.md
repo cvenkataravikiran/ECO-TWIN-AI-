@@ -1,4 +1,4 @@
-# EcoTwin AI — Testing Guide
+# EcoPath.AI — Testing Guide
 
 ## Backend Tests
 

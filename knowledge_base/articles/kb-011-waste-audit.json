@@ -13,8 +13,8 @@
     "Pick one prevention action and repeat the measurement"
   ],
   "limitations": ["Waste composition depends on location and activity", "A short audit may not represent seasonal patterns", "No emissions or diversion rate is estimated"],
-  "source_title": "EcoTwin measurement method",
-  "source_publisher": "EcoTwin AI",
+  "source_title": "EcoPath.AI measurement method",
+  "source_publisher": "EcoPath.AI",
   "source_url": "",
   "publication_date": "2026-10-18",
   "last_verified_date": "2026-10-18",

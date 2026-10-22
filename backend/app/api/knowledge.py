@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Knowledge Base API Routes
+EcoPath.AI — Knowledge Base API Routes
 """
 import json
 from typing import Optional, List

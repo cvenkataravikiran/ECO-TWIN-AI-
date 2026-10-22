@@ -9,7 +9,7 @@
       "verification_status": "verified",
       "verification_date": "2026-10-16",
       "publication_date": null,
-      "limitations": ["Homepage confirms the institution and Standards & Labelling programme exist. Individual appliance star-rating tables were not copied into EcoTwin."]
+      "limitations": ["Homepage confirms the institution and Standards & Labelling programme exist. Individual appliance star-rating tables were not copied into EcoPath.AI."]
     },
     {
       "id": "src-cea-cdm",
@@ -31,7 +31,7 @@
       "verification_status": "verified",
       "verification_date": "2026-10-16",
       "publication_date": null,
-      "limitations": ["Homepage verified. City-specific GHMC pickup schedules are not published here and are not invented in EcoTwin."]
+      "limitations": ["Homepage verified. City-specific GHMC pickup schedules are not published here and are not invented in EcoPath.AI."]
     }
   ]
 }

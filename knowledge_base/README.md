@@ -1,4 +1,4 @@
-# EcoTwin AI — Knowledge Base
+# EcoPath.AI — Knowledge Base
 
 ## Overview
 Internal sustainability guidance articles, recommendation rules, calculation factors, and Eco-Scorer's supported object-to-guidance mappings. Articles support contextual recommendations and are not exposed as a separate browsing page. Eco-Scorer does not calculate an environmental score from object appearance.

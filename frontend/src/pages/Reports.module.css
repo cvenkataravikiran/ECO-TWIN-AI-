@@ -38,24 +38,25 @@
   letter-spacing: -0.035em;
 }
 
-.periodRow {
-  border-radius: 10px;
-  box-shadow: none;
+.periodRow,
+.reportCard,
+.generatedItem {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
 }
 
 .reportCard {
   min-height: 240px;
   padding: clamp(18px, 2.5vw, 26px);
-  border-radius: 10px;
-  box-shadow: none;
 }
 
 .reportIcon {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .generateBtn,
 .csvBtn,
-.downloadBtn {
-  border-radius: 7px;
+.downloadBtn,
+.input {
+  border-radius: var(--radius-md);
 }

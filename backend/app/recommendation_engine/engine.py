@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Rule-Based Recommendation Engine
+EcoPath.AI — Rule-Based Recommendation Engine
 
 This engine applies deterministic rules to user context.
 It does NOT use any generative AI or LLM.
@@ -43,6 +43,8 @@ class RecommendationResult:
     priority_score: int
     prioritization_reason: str
     missing_data: List[str]  # data that would improve the estimate
+    next_step: str = ""
+    input_basis: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -71,7 +73,53 @@ class RecommendationResult:
             "prioritizationReason": self.prioritization_reason,
             "missing_data": self.missing_data,
             "missingData": self.missing_data,
+            "next_step": self.next_step,
+            "nextStep": self.next_step,
+            "input_basis": self.input_basis,
+            "inputBasis": self.input_basis,
         }
+
+
+NEXT_STEPS = {
+    "rec-001": "List lamp wattages and daily use, then compare suitable LED replacements.",
+    "rec-002": "Measure one device’s standby draw before deciding whether it is safe to switch off.",
+    "rec-003": "Track food discarded for seven days, then plan meals around perishables already at home.",
+    "rec-004": "Choose one practical short car trip and compare safe walking, cycling, or transit options.",
+    "rec-005": "Record a monthly water baseline and check one frequently used fixture for leaks.",
+    "rec-006": "Check the latest water reading and inspect visible fixtures for unexplained changes.",
+    "rec-007": "Measure one tap or shower’s flow before changing its fittings.",
+    "rec-008": "Weigh wet, dry, and residual waste separately for one week.",
+    "rec-009": "Check your local authority’s current sorting rules before changing disposal practices.",
+    "rec-010": "Get a repair quote and compare it with the price of a suitable replacement.",
+    "rec-011": "Before your next durable-goods purchase, check whether you need it and whether it can be repaired.",
+    "rec-012": "Log trip distance, purpose, travel mode, and cost for one week before comparing journeys.",
+    "rec-013": "List the wattage and daily operating hours of your three most-used appliances.",
+    "rec-014": "List food already at home before your next grocery shop and track discarded food separately.",
+    "rec-015": "Review resource records by site, reporting period, measurement type, and source.",
+}
+
+
+def _input_basis(recommendation_id: str, context: UserContext, effective_kwh: Optional[float]) -> str:
+    if recommendation_id in {"rec-001", "rec-002", "rec-013"} and effective_kwh is not None:
+        return f"Electricity input: {effective_kwh:.0f} kWh/month."
+    if recommendation_id in {"rec-003", "rec-014"} and context.monthly_grocery_spend is not None:
+        return f"Grocery-spend input: ₹{context.monthly_grocery_spend:.0f}/month."
+    if recommendation_id == "rec-004" and context.monthly_travel_km is not None:
+        return f"Travel input: {context.monthly_travel_km:.0f} km/month by car."
+    if recommendation_id == "rec-012" and context.monthly_travel_km is not None:
+        mode = f" by {context.travel_mode}" if context.travel_mode else ""
+        return f"Travel input: {context.monthly_travel_km:.0f} km/month{mode}."
+    if recommendation_id == "rec-005":
+        return "Goal input: you selected reduce water."
+    if recommendation_id in {"rec-006", "rec-007"} and context.monthly_water_liters is not None:
+        return f"Water input: {context.monthly_water_liters:.0f} L/month."
+    if recommendation_id in {"rec-008", "rec-009"} and context.monthly_waste_kg is not None:
+        return f"Waste input: {context.monthly_waste_kg:.1f} kg/month."
+    if recommendation_id in {"rec-010", "rec-011"} and context.monthly_shopping_spend is not None:
+        return f"Shopping input: ₹{context.monthly_shopping_spend:.0f}/month."
+    if recommendation_id == "rec-015":
+        return "Workspace input: business workspace with resource records."
+    return "Based on the resource or goal information available in this workspace."
 
 
 ACTIVE_RULES: List[Dict[str, Any]] = [
@@ -126,7 +174,7 @@ ACTIVE_RULES: List[Dict[str, Any]] = [
         "knowledge_article_id": "kb-006",
         "recommendation_id": "rec-005",
         "target_audience": ["individual", "business"],
-        "trigger_condition": "'reduce-water' in goals or no other recommendations apply",
+        "trigger_condition": "'reduce-water' in goals",
         "calculation_module": None,
         "description": "Suggests measuring fixture flow and checking for leaks; no water, cost, or emissions estimates are made.",
     },
@@ -350,7 +398,7 @@ def generate_recommendations(context: UserContext) -> List[RecommendationResult]
                 id="rec-003",
                 title="Implement Structured Meal Planning & Food Storage",
                 category="food-kitchen",
-                relevance_explanation=f"With grocery spending of ₹{context.monthly_grocery_spend:.0f}/month, EcoTwin will not assume a national waste percentage. Enter a measured waste fraction to estimate rupee savings.",
+                relevance_explanation=f"With grocery spending of ₹{context.monthly_grocery_spend:.0f}/month, EcoPath.AI will not assume a national waste percentage. Enter a measured waste fraction to estimate rupee savings.",
                 knowledge_article_id="kb-003",
                 difficulty="easy",
                 estimated_monthly_savings=None,
@@ -409,9 +457,9 @@ def generate_recommendations(context: UserContext) -> List[RecommendationResult]
         )
 
     # -------------------------------------------------------------
-    # Rule 5: Domestic Water Conservation Fixtures (General / Goal-driven)
+    # Rule 5: Domestic Water Conservation Fixtures (Goal-driven)
     # -------------------------------------------------------------
-    if "reduce-water" in goals or not recommendations:
+    if "reduce-water" in goals:
         priority = 65
         if "reduce-water" in goals:
             priority += 8
@@ -602,6 +650,17 @@ def generate_recommendations(context: UserContext) -> List[RecommendationResult]
             priority=72,
             reason="This is a business workspace with resource data.",
             missing_data=["Site-level records", "Consistent reporting periods", "Named owner for each data source"],
+        )
+
+    for recommendation in recommendations:
+        recommendation.next_step = NEXT_STEPS.get(
+            recommendation.id,
+            "Review the supporting guidance and choose a practical next step.",
+        )
+        recommendation.input_basis = _input_basis(
+            recommendation.id,
+            context,
+            effective_kwh,
         )
 
     # Sort deterministically by priority_score descending, then id

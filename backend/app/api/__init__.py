@@ -1,1 +1,1 @@
-"""EcoTwin AI — API Routes"""
+"""EcoPath.AI API routes."""

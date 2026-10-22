@@ -1,1 +1,1 @@
-# Computer vision package for EcoTwin Eco-Scorer
+# Computer vision package for EcoPath.AI Eco-Scorer

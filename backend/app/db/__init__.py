@@ -1,1 +1,1 @@
-"""EcoTwin AI — Database Package"""
+"""EcoPath.AI database package."""

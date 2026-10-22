@@ -26,7 +26,7 @@ export function AppLayout() {
       <main className={styles.main}>
         <header className={styles.topbar}>
           <div className={styles.breadcrumb}>
-            <span className={styles.brandCrumb}>ECOTWIN</span>
+            <span className={styles.brandCrumb}>ECOPATH.AI</span>
             <span className={styles.breadcrumbDivider}>/</span>
             <span className={styles.pageCrumb}>{pageLabel}</span>
           </div>

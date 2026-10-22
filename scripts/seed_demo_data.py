@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Seed Demo Data Script
+EcoPath.AI — Seed Demo Data Script
 Run only in a disposable presentation database:
 ECOTWIN_ALLOW_DEMO_SEED=1 python scripts/seed_demo_data.py
 
@@ -274,7 +274,7 @@ def main():
             "Demo seeding is disabled by default. Set ECOTWIN_ALLOW_DEMO_SEED=1 only "
             "when using a disposable presentation database."
         )
-    print("Seeding EcoTwin AI demo data...")
+    print("Seeding EcoPath.AI demo data...")
     print("(All data is sample/demonstration data)\n")
 
     # Ensure tables exist

@@ -13,8 +13,8 @@
     "Separate edible food from unavoidable preparation waste"
   ],
   "limitations": ["Food safety and storage requirements depend on the item", "No food-waste fraction, cost saving, or emissions estimate is assumed"],
-  "source_title": "EcoTwin measurement method",
-  "source_publisher": "EcoTwin AI",
+  "source_title": "EcoPath.AI measurement method",
+  "source_publisher": "EcoPath.AI",
   "source_url": "",
   "publication_date": "2026-10-18",
   "last_verified_date": "2026-10-18",

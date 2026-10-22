@@ -1,3 +1,3 @@
 """
-EcoTwin AI — Backend Tests
+EcoPath.AI — Backend Tests
 """

@@ -38,26 +38,27 @@
 }
 
 .section {
-  border-radius: 10px;
-  box-shadow: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
 }
 
 .sectionTitle {
   font-size: var(--text-lg);
 }
 
-.aboutGrid {
-  border-radius: 8px;
-}
-
+.aboutGrid,
 .dataRow,
 .notice {
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .saveBtn,
-.dangerBtn {
-  border-radius: 7px;
+.dangerBtn,
+.input,
+.select,
+.textarea,
+.staticValue {
+  border-radius: var(--radius-md);
 }
 
 @media (max-width: 560px) {

@@ -124,7 +124,7 @@ def generate_pdf(
     pdf.set_auto_page_break(auto=True, margin=16)
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 16)
-    pdf.multi_cell(0, 8, "EcoTwin AI - Sustainability report", new_x="LMARGIN")
+    pdf.multi_cell(0, 8, "EcoPath.AI - Sustainability report", new_x="LMARGIN")
     pdf.set_font("Helvetica", "", 11)
     pdf.multi_cell(0, 6, _pdf_text(f"Workspace: {ws.name} ({ws.type})"), new_x="LMARGIN")
     pdf.multi_cell(0, 6, f"Generated: {datetime.now().astimezone().strftime('%Y-%m-%d %H:%M %Z')}", new_x="LMARGIN")

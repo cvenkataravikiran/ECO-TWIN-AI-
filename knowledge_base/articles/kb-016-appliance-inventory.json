@@ -13,8 +13,8 @@
     "Compare the appliance-level records with the billed total"
   ],
   "limitations": ["Nameplate power is not the same as actual energy use", "No savings or emissions are estimated without measured usage and applicable factors"],
-  "source_title": "EcoTwin measurement method",
-  "source_publisher": "EcoTwin AI",
+  "source_title": "EcoPath.AI measurement method",
+  "source_publisher": "EcoPath.AI",
   "source_url": "",
   "publication_date": "2026-10-18",
   "last_verified_date": "2026-10-18",

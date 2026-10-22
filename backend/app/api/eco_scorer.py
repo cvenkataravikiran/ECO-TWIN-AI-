@@ -69,15 +69,18 @@ def _knowledge_recommendations(
     observations: list[VisualObservation],
     rules: dict[str, Any],
     map_class: Callable[[str, dict[str, Any]], dict[str, Any]],
+    include_detected: bool = False,
 ) -> list[dict]:
     article_observations: dict[str, list[VisualObservation]] = {}
     has_standby_energy_guidance = False
     for obs in observations:
-        if obs.status not in {"confirmed", "corrected"}:
+        if obs.status not in {"confirmed", "corrected"} and not (
+            include_detected and obs.status == "detected"
+        ):
             continue
         mapped = map_class(obs.class_label, rules)
         mapped_article_ids = _article_ids_for_mapping(mapped)
-        if "kb-002" in mapped_article_ids:
+        if obs.status in {"confirmed", "corrected"} and "kb-002" in mapped_article_ids:
             has_standby_energy_guidance = True
         for article_id in mapped_article_ids:
             article_observations.setdefault(article_id, []).append(obs)
@@ -96,7 +99,7 @@ def _knowledge_recommendations(
     if unavailable_article_ids:
         raise HTTPException(
             status_code=503,
-            detail="Mapped knowledge-base recommendations are unavailable. Import the EcoTwin knowledge-base articles and retry.",
+            detail="Mapped knowledge-base recommendations are unavailable. Import the EcoPath.AI knowledge-base articles and retry.",
         )
     results = []
     electricity_context = (
@@ -146,6 +149,7 @@ def _knowledge_recommendations(
             "implementation_steps": json.loads(article.implementation_steps or "[]"),
             "limitations": json.loads(article.limitations or "[]"),
             "observation_ids": [obs.id for obs in related],
+            "requires_confirmation": any(obs.status == "detected" for obs in related),
             "guidance": sorted({
                 map_class(obs.class_label, rules).get("guidance", "")
                 for obs in related
@@ -372,7 +376,16 @@ async def analyse_image(
         "processing_time_ms": processing_time_ms,
         "detections": payload_dets,
         "eco_score": score_result,
-        "recommendations": [],
+        "recommendations": _knowledge_recommendations(
+            db,
+            workspace_id,
+            db.query(VisualObservation)
+            .filter(VisualObservation.assessment_id == assessment.id)
+            .all(),
+            rules,
+            map_class,
+            include_detected=True,
+        ),
         "privacy_notice": "The image was processed in memory and was not stored.",
     }
 
@@ -422,7 +435,12 @@ def update_observation(observation_id: str, payload: ObservationUpdate, db: Sess
         "observation": _obs_dict(obs, mapped.get("guidance", "")),
         "eco_score": score_result,
         "recommendations": _knowledge_recommendations(
-            db, str(assessment.workspace_id), all_obs, rules, map_class
+            db,
+            str(assessment.workspace_id),
+            all_obs,
+            rules,
+            map_class,
+            include_detected=True,
         ),
     }
 

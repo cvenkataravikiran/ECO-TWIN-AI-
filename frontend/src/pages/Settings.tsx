@@ -93,7 +93,7 @@ export default function Settings() {
 
         {/* About */}
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>About EcoTwin AI</h2>
+          <h2 className={styles.sectionTitle}>About EcoPath.AI</h2>
           <div className={styles.aboutGrid}>
             <div className={styles.aboutRow}><span>Version</span><span>1.0.0-MVP</span></div>
             <div className={styles.aboutRow}><span>CV Model</span><span>YOLOX-Tiny (ONNX) · Apache 2.0</span></div>
@@ -104,7 +104,7 @@ export default function Settings() {
           </div>
           <div className={styles.notice}>
             <Info size={14} />
-            <span>EcoTwin AI combines live workspace data, documented sustainability rules, and knowledge-based recommendations to support practical decision-making.</span>
+            <span>EcoPath.AI combines live workspace data, documented sustainability rules, and knowledge-based recommendations to support practical decision-making.</span>
           </div>
         </section>
 

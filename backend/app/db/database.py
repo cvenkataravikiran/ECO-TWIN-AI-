@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Database Configuration
+EcoPath.AI — Database Configuration
 Uses SQLAlchemy with SQLite for local development.
 PostgreSQL is supported for production by changing DATABASE_URL.
 """

@@ -1,5 +1,5 @@
 """
-EcoTwin AI — Energy Calculations
+EcoPath.AI — Energy Calculations
 All formulas are documented. Inputs and outputs use explicit units.
 """
 

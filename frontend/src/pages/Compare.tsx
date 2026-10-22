@@ -17,6 +17,7 @@ import {
   Award,
   Layers,
   Sparkles,
+  Leaf,
   Building2,
   Home,
 } from 'lucide-react';
@@ -31,6 +32,7 @@ import {
   Legend,
 } from 'recharts';
 import { useWorkspace } from '@/hooks/useWorkspace';
+import KnowledgeGuidance from '@/components/KnowledgeGuidance';
 import { formatINR } from '@/utils/currency';
 import type { ComparisonOption, DifficultyLevel } from '@/types';
 import styles from './Compare.module.css';
@@ -812,6 +814,81 @@ export default function Compare() {
     () => submittedInputSnapshot === inputSnapshot ? computedOptions : [],
     [submittedInputSnapshot, inputSnapshot, computedOptions],
   );
+
+  const personaComparison = useMemo(() => {
+    if (calculatedOptions.length < 2) return null;
+
+    const baseline = calculatedOptions[0];
+    const alternative = [...calculatedOptions.slice(1)].sort(
+      (a, b) => (a.results.annualCost ?? Infinity) - (b.results.annualCost ?? Infinity),
+    )[0];
+    const baselineFiveYearCost =
+      (baseline.results.upfrontCost ?? 0) + (baseline.results.annualCost ?? 0) * 5;
+    const alternativeFiveYearCost =
+      (alternative.results.upfrontCost ?? 0) + (alternative.results.annualCost ?? 0) * 5;
+
+    let activity: { label: string; baseline: string; alternative: string; change: string; note: string };
+    if (activeScenarioId === 'lighting') {
+      const annualHours = lighting.hoursPerDay * 365;
+      const baselineKwh =
+        (lighting.numBulbs * Number(baseline.inputs.wattage) * annualHours) / 1000;
+      const alternativeKwh =
+        (lighting.numBulbs * Number(alternative.inputs.wattage) * annualHours) / 1000;
+      activity = {
+        label: 'Modeled electricity use per year',
+        baseline: `${baselineKwh.toFixed(1)} kWh`,
+        alternative: `${alternativeKwh.toFixed(1)} kWh`,
+        change: alternativeKwh < baselineKwh
+          ? `${(baselineKwh - alternativeKwh).toFixed(1)} kWh less per year in this model.`
+          : alternativeKwh > baselineKwh
+          ? `${(alternativeKwh - baselineKwh).toFixed(1)} kWh more per year in this model.`
+          : 'No modeled electricity-use difference.',
+        note: 'Calculated from your bulb count, wattage, and daily operating hours; emissions are not calculated.',
+      };
+    } else if (activeScenarioId === 'water') {
+      const annualMinutes = water.showerMinutesPerDay * 365;
+      const baselineLitres = annualMinutes * Number(baseline.inputs.flowRate);
+      const alternativeLitres = annualMinutes * Number(alternative.inputs.flowRate);
+      activity = {
+        label: 'Modeled shower water use per year',
+        baseline: `${Math.round(baselineLitres).toLocaleString()} L`,
+        alternative: `${Math.round(alternativeLitres).toLocaleString()} L`,
+        change: alternativeLitres < baselineLitres
+          ? `${Math.round(baselineLitres - alternativeLitres).toLocaleString()} L less per year in this model.`
+          : alternativeLitres > baselineLitres
+          ? `${Math.round(alternativeLitres - baselineLitres).toLocaleString()} L more per year in this model.`
+          : 'No modeled water-use difference.',
+        note: 'Based on your entered shower duration and fixture flow rates; actual use varies with behavior and conditions.',
+      };
+    } else if (activeScenarioId === 'containers') {
+      const annualUses = Number(baseline.inputs.annualDisposables);
+      activity = {
+        label: 'Single-use items per year',
+        baseline: `${annualUses.toLocaleString()} modeled uses`,
+        alternative: 'Potentially avoided',
+        change: `Up to ${annualUses.toLocaleString()} single-use items avoided per year if the reusable replaces each use.`,
+        note: 'Assumes the reusable container replaces one disposable item for each modeled use and is consistently reused.',
+      };
+    } else {
+      const annualDistance = commute.distanceKm * commute.daysPerWeek * 52.14;
+      activity = {
+        label: 'Commute distance per year',
+        baseline: `${annualDistance.toFixed(0)} km`,
+        alternative: `${annualDistance.toFixed(0)} km`,
+        change: 'The modeled distance stays the same; mode-specific emissions are unavailable.',
+        note: 'The model holds trip distance constant; it does not calculate or verify emissions for either travel mode.',
+      };
+    }
+
+    return {
+      baseline,
+      alternative,
+      baselineFiveYearCost,
+      alternativeFiveYearCost,
+      fiveYearDifference: baselineFiveYearCost - alternativeFiveYearCost,
+      activity,
+    };
+  }, [calculatedOptions, activeScenarioId, lighting, water, commute]);
 
   // -------------------------------------------------------------
   // WINNER DETERMINATION
@@ -2292,6 +2369,111 @@ export default function Compare() {
           </table>
         </div>
       </section>
+      )}
+
+      {personaComparison && (
+        <section className={styles.personaSection} aria-labelledby="persona-comparison-heading">
+          <div className={styles.personaHeading}>
+            <div>
+              <span className={styles.personaEyebrow}>See the everyday difference</span>
+              <h2 id="persona-comparison-heading">Two routines. Your scenario. Side by side.</h2>
+              <p>
+                An illustrative comparison using your submitted inputs—not personal data or a prediction about any individual.
+              </p>
+            </div>
+            <span className={styles.personaScenarioTag}>{currentScenarioMeta.shortTitle}</span>
+          </div>
+
+          <div className={styles.personaGrid}>
+            <article className={`${styles.personaCard} ${styles.personaBaseline}`}>
+              <div className={styles.personaCardHeading}>
+                <span className={styles.personaIcon}><Home size={18} /></span>
+                <div>
+                  <span className={styles.personaLabel}>Persona 1</span>
+                  <h3>Conventional routine</h3>
+                </div>
+              </div>
+              <p className={styles.personaChoice}>{personaComparison.baseline.name}</p>
+              <div className={styles.personaStats}>
+                <div>
+                  <span>Annual operating cost</span>
+                  <strong>{formatRupees(personaComparison.baseline.results.annualCost)}</strong>
+                </div>
+                <div>
+                  <span>One-time cost</span>
+                  <strong>{formatRupees(personaComparison.baseline.results.upfrontCost ?? 0)}</strong>
+                </div>
+                <div>
+                  <span>Projected 5-year cost</span>
+                  <strong>{formatRupees(personaComparison.baselineFiveYearCost)}</strong>
+                </div>
+              </div>
+              <div className={styles.personaActivity}>
+                <span>{personaComparison.activity.label}</span>
+                <strong>{personaComparison.activity.baseline}</strong>
+              </div>
+            </article>
+
+            <article className={`${styles.personaCard} ${styles.personaSustainable}`}>
+              <div className={styles.personaCardHeading}>
+                <span className={styles.personaIcon}><Leaf size={18} /></span>
+                <div>
+                  <span className={styles.personaLabel}>Persona 2</span>
+                  <h3>Sustainability-minded routine</h3>
+                </div>
+              </div>
+              <p className={styles.personaChoice}>
+                Lowest annual operating-cost alternative: {personaComparison.alternative.name}
+              </p>
+              <div className={styles.personaStats}>
+                <div>
+                  <span>Annual operating cost</span>
+                  <strong>{formatRupees(personaComparison.alternative.results.annualCost)}</strong>
+                </div>
+                <div>
+                  <span>One-time cost</span>
+                  <strong>{formatRupees(personaComparison.alternative.results.upfrontCost ?? 0)}</strong>
+                </div>
+                <div>
+                  <span>Projected 5-year cost</span>
+                  <strong>{formatRupees(personaComparison.alternativeFiveYearCost)}</strong>
+                </div>
+              </div>
+              <div className={styles.personaActivity}>
+                <span>{personaComparison.activity.label}</span>
+                <strong>{personaComparison.activity.alternative}</strong>
+              </div>
+            </article>
+          </div>
+
+          <div className={styles.personaTakeaway} role="note">
+            <TrendingDown size={18} />
+            <p>
+              {personaComparison.fiveYearDifference > 0
+                ? <>In this model, the sustainability-minded option costs <strong>{formatRupees(personaComparison.fiveYearDifference)} less</strong> over five years.</>
+                : personaComparison.fiveYearDifference < 0
+                ? <>In this model, the sustainability-minded option costs <strong>{formatRupees(Math.abs(personaComparison.fiveYearDifference))} more</strong> over five years.</>
+                : <>In this model, both routines have the same projected five-year cost.</>}
+              {' '} {personaComparison.activity.change} {personaComparison.activity.note}
+            </p>
+          </div>
+          <p className={styles.personaDisclaimer}>
+            The alternative is selected from the options shown above. This comparison reports modeled cost and scenario-specific activity only; it does not claim verified carbon or overall environmental savings.
+          </p>
+        </section>
+      )}
+
+      {winner && (
+        <KnowledgeGuidance
+          title={`Knowledge-base guidance for ${currentScenarioMeta.shortTitle}`}
+          categories={[currentScenarioMeta.category]}
+          contextSummary={
+            `${winner.option.name} has the lowest projected annual cost (${formatRupees(winner.option.results.annualCost)}) ` +
+            `for the submitted inputs. This is a cost comparison only; environmental emissions are not calculated. ` +
+            'Review the scenario assumptions and local conditions before acting.'
+          }
+          limit={2}
+        />
       )}
 
       {/* --- CALCULATION TRANSPARENCY SECTION --- */}

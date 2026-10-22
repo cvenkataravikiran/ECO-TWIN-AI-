@@ -3,7 +3,7 @@
   "title": "Water checks: meter readings, leaks, and fixture flow",
   "category": "water-nature",
   "summary": "Use complete billing periods and consistent units to track water. Check for visible leaks and measure fixture flow before choosing a change.",
-  "content": "Record water quantities from a meter or bill and keep the billing dates and units. One kilolitre (kL) equals 1,000 litres (L). Compare like-for-like periods; a partial period is not directly comparable to a full month.\n\nCheck taps, toilet cisterns, and visible pipework for leaks. A bucket and timer can measure fixture flow in litres per minute. Record the test conditions and repeat it if readings vary.\n\nDo not assume a fixture change will reduce total use. Actual results depend on the fixture, usage, water pressure, and user behaviour. EcoTwin does not supply local water tariffs or estimate savings from a photo.",
+  "content": "Record water quantities from a meter or bill and keep the billing dates and units. One kilolitre (kL) equals 1,000 litres (L). Compare like-for-like periods; a partial period is not directly comparable to a full month.\n\nCheck taps, toilet cisterns, and visible pipework for leaks. A bucket and timer can measure fixture flow in litres per minute. Record the test conditions and repeat it if readings vary.\n\nDo not assume a fixture change will reduce total use. Actual results depend on the fixture, usage, water pressure, and user behaviour. EcoPath.AI does not supply local water tariffs or estimate savings from a photo.",
   "audience": ["individual", "household", "business", "institution"],
   "applicability_conditions": ["Has a water meter, bill, or a fixture whose flow can be measured"],
   "implementation_steps": [
@@ -13,8 +13,8 @@
     "Compare only periods with matching dates and units"
   ],
   "limitations": ["Unmetered tanker or borewell use may not have a reliable quantity", "No local tariff is provided", "Flow measurement does not by itself establish water savings"],
-  "source_title": "EcoTwin measurement method",
-  "source_publisher": "EcoTwin AI",
+  "source_title": "EcoPath.AI measurement method",
+  "source_publisher": "EcoPath.AI",
   "source_url": "",
   "publication_date": "2026-10-18",
   "last_verified_date": "2026-10-18",

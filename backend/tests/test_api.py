@@ -1,5 +1,5 @@
 """
-EcoTwin AI — API Integration Tests
+EcoPath.AI — API Integration Tests
 Uses httpx directly to test running server endpoints.
 """
 import pytest

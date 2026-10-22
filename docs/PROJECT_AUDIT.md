@@ -1,4 +1,4 @@
-# EcoTwin AI — Project Audit
+# EcoPath.AI — Project Audit
 
 **Audit date:** 16 October 2026  
 **Method:** Full repository inspection of frontend, backend, knowledge base, computer vision, scripts, tests, and documentation. Features were judged by executable behaviour (API calls, persistence, inference), not by the existence of pages or README status badges.

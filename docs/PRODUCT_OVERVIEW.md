@@ -1,8 +1,8 @@
-# EcoTwin AI — Product Overview
+# EcoPath.AI — Product Overview
 
 ## Vision
 
-EcoTwin AI is a Sustainability Decision and Action Platform for individuals, households, small businesses, colleges, and institutions.
+EcoPath.AI is a Sustainability Decision and Action Platform for individuals, households, small businesses, colleges, and institutions.
 
 The platform connects these steps in one coherent workflow:
 
@@ -33,25 +33,25 @@ The platform connects these steps in one coherent workflow:
 ## Feature Set
 
 ### Dashboard
-Premium sustainability workspace with real-time overview cards, resource trends chart, next best actions, and quick navigation.
+Sustainability workspace with monthly spend, active-action, and savings overview cards; cross-resource trends indexed to each category's first recorded period; concise next actions; and quick navigation.
 
 ### Resources & Expenses
 Full CRUD tracker for electricity, water, gas, travel, food, waste, and shopping. Supports measured, estimated, and imported data. CSV export.
 
 ### Action Planner
-Personalized recommendations ranked by priority score. Each recommendation shows relevance explanation, estimated savings, environmental benefit, implementation steps, formula, assumptions, and confidence level. Users can add to plan, track status changes, and record actual results.
+Personalized recommendations ranked by priority score and triggered by resource inputs or selected goals. Recommendation cards lead with a concise next step and the input basis; expanded details retain the relevance explanation, knowledge-base guidance, implementation steps, formula, assumptions, and confidence level. Estimates appear only when supported by available data. Users can add actions to the plan, track status changes, and record user-reported results.
 
 ### Compare Before You Change
 Side-by-side comparison tool with 4 built-in scenarios: Lighting (LED vs CFL vs Incandescent), Commute (Car vs Cycling vs Public Transport), Containers (Reusable vs Disposable), Water (Standard vs Low-Flow). Live recalculation with transparent formulas.
 
-### Recommendations
-Contextual, deterministic recommendations use workspace measurements and curated internal guidance. Users see why each recommendation applies and which data or measurements are still missing; the internal article library is not exposed as a separate browsing page.
+### Recommendations and Knowledge Guidance
+Contextual, deterministic recommendations use eligible workspace measurements and documented guidance. The Dashboard foregrounds concise actions, while the Action Planner retains supporting rationale, knowledge guidance, implementation steps, and calculation details. Relevant guidance is also surfaced in Resources, Compare, Circular Living, and Eco-Scorer, next to the task it supports; there is no separate article-browsing screen.
 
 ### Circular Living Finder
 Waste hierarchy guidance: Maintain → Repair → Reuse → Donate → Recycle → Dispose. Pre-built guidance for common items.
 
 ### Eco-Scorer
-Optional local computer vision. When the YOLOX-Tiny ONNX model is installed, upload or capture an image, detect supported COCO objects, and confirm, correct, or dismiss observations. Confirmed mapped observations retrieve curated knowledge-base guidance that can be saved to the Action Planner. The app withholds a numerical environmental score because a photo cannot establish lifecycle emissions, actual electricity use, product composition, or recyclability.
+Optional local computer vision. When the YOLOX-Tiny ONNX model is installed, upload or capture an image, detect supported COCO objects, and confirm, correct, or dismiss observations. The screen foregrounds a concise possible action for reviewed detections; users confirm observations before saving related actions to the Action Planner. Guidance can suggest conditional reuse, repair, or local recycling checks, but the app does not infer that an item is harmful or recyclable from appearance and withholds a numerical environmental score.
 
 ### Impact Ledger
 Tracks estimated vs actual impact of completed actions. Highlights verified results vs projections.
