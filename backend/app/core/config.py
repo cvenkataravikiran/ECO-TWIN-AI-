@@ -10,6 +10,7 @@ from typing import List
 # Project root = ecopath-ai/ (parent of backend/)
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 _DEFAULT_DB = _PROJECT_ROOT / "data" / "ecotwin.db"
+_PRODUCTION_FRONTEND_ORIGIN = "https://eco-twin-ai-omega.vercel.app"
 
 
 def _load_cors_origins() -> List[str]:
@@ -21,6 +22,7 @@ def _load_cors_origins() -> List[str]:
     ]
     if not configured_origins:
         configured_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    configured_origins.append(_PRODUCTION_FRONTEND_ORIGIN)
 
     return list(
         dict.fromkeys(origin.strip().rstrip("/") for origin in configured_origins)

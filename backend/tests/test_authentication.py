@@ -142,6 +142,29 @@ def test_registration_rejects_weak_password(auth_client):
     assert response.status_code == 422
 
 
+def test_https_proxy_sets_cross_site_session_cookie(auth_client):
+    async def exercise():
+        auth_client.base_url = httpx.URL("https://test")
+        response = await auth_client.post(
+            "/api/auth/register",
+            headers={
+                "origin": "https://eco-twin-ai-omega.vercel.app",
+                "x-forwarded-proto": "https",
+            },
+            json={"email": "secure@example.com", "password": "strong-password-4"},
+        )
+
+        assert response.status_code == 201
+        cookie_header = response.headers["set-cookie"].lower()
+        assert "secure" in cookie_header
+        assert "samesite=none" in cookie_header
+        assert response.headers["access-control-allow-origin"] == "https://eco-twin-ai-omega.vercel.app"
+        assert response.headers["access-control-allow-credentials"] == "true"
+        assert (await auth_client.get("/api/workspaces")).status_code == 200
+
+    asyncio.run(exercise())
+
+
 def test_registration_rejects_duplicate_email(auth_client):
     async def exercise():
         credentials = {"email": "person@example.com", "password": "strong-password-3"}

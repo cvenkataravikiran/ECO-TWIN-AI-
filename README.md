@@ -178,8 +178,8 @@ Copy `.env.example` and adjust:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DATABASE_URL` | `sqlite:///data/ecotwin.db` | Database connection |
-| `CORS_ORIGINS` | `http://localhost:5173` | Allowed frontend origins |
-| `SESSION_COOKIE_SECURE` | `false` | Set `true` when using HTTPS |
+| `CORS_ORIGINS` | Local development origins | Allowed frontend origins; the deployed Vercel frontend origin is also allowed |
+| `SESSION_COOKIE_SECURE` | `false` | Force secure cookies; HTTPS requests and HTTPS reverse-proxy requests automatically receive cross-site secure cookies |
 | `DEBUG` | `true` | Enable SQL logging |
 | `CV_MODEL_PATH` | `computer_vision/models/yolox_tiny.onnx` | CV model location |
 | `CV_CONFIDENCE_THRESHOLD` | `0.35` | Object-detection threshold (not sustainability confidence) |

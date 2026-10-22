@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -70,7 +70,16 @@ def _verify_password(password: str, encoded_hash: str) -> bool:
         return False
 
 
-def _new_session(db: Session, user: User, response: Response) -> None:
+def _secure_cookie_for_request(request: Request) -> bool:
+    forwarded_proto = request.headers.get("x-forwarded-proto", "").split(",", 1)[0].strip()
+    return (
+        settings.session_cookie_secure
+        or request.url.scheme == "https"
+        or forwarded_proto == "https"
+    )
+
+
+def _new_session(db: Session, user: User, request: Request, response: Response) -> None:
     token = secrets.token_urlsafe(48)
     expires_at = datetime.utcnow() + SESSION_LIFETIME
     db.add(
@@ -82,13 +91,14 @@ def _new_session(db: Session, user: User, response: Response) -> None:
         )
     )
     db.commit()
+    secure_cookie = _secure_cookie_for_request(request)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=token,
         max_age=int(SESSION_LIFETIME.total_seconds()),
         httponly=True,
-        secure=settings.session_cookie_secure,
-        samesite="lax",
+        secure=secure_cookie,
+        samesite="none" if secure_cookie else "lax",
         path="/",
     )
 
@@ -133,6 +143,7 @@ def require_authenticated_user(user: User = Depends(get_current_user)) -> User:
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 def register(
     payload: Credentials,
+    request: Request,
     response: Response,
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
@@ -149,7 +160,7 @@ def register(
                 {Workspace.owner_id: user.id},
                 synchronize_session=False,
             )
-        _new_session(db, user, response)
+        _new_session(db, user, request, response)
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(status_code=409, detail="An account with this email already exists.") from exc
@@ -159,6 +170,7 @@ def register(
 @router.post("/login")
 def login(
     payload: Credentials,
+    request: Request,
     response: Response,
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
@@ -169,7 +181,7 @@ def login(
     )
     if not user or not password_is_valid:
         raise HTTPException(status_code=401, detail="Email or password is incorrect.")
-    _new_session(db, user, response)
+    _new_session(db, user, request, response)
     return _user_payload(user)
 
 
@@ -180,6 +192,7 @@ def get_session_user(user: User = Depends(get_current_user)) -> dict[str, str]:
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
+    request: Request,
     response: Response,
     db: Session = Depends(get_db),
     session_token: Annotated[str | None, Cookie(alias=SESSION_COOKIE_NAME)] = None,
@@ -188,11 +201,12 @@ def logout(
         token_hash = hashlib.sha256(session_token.encode("utf-8")).hexdigest()
         db.query(UserSession).filter(UserSession.token_hash == token_hash).delete()
         db.commit()
+    secure_cookie = _secure_cookie_for_request(request)
     response.delete_cookie(
         key=SESSION_COOKIE_NAME,
         httponly=True,
-        secure=settings.session_cookie_secure,
-        samesite="lax",
+        secure=secure_cookie,
+        samesite="none" if secure_cookie else "lax",
         path="/",
     )
     response.status_code = status.HTTP_204_NO_CONTENT
