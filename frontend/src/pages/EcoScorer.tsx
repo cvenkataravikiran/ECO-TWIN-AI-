@@ -95,6 +95,11 @@ function getLocalDate(): string {
   ].join('-');
 }
 
+function getCameraErrorName(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null || !('name' in error)) return undefined;
+  return typeof error.name === 'string' ? error.name : undefined;
+}
+
 function ErrorMessage({ children }: { children: string }) {
   return (
     <div className={styles.errorMessage} role="alert">
@@ -131,11 +136,64 @@ export default function EcoScorer() {
   const [cameraStarting, setCameraStarting] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState('');
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const cameraRequestIdRef = useRef(0);
+
+  const closeCamera = () => {
+    cameraRequestIdRef.current += 1;
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraStream(null);
+    setCameraOpen(false);
+    setCameraStarting(false);
+    setCameraReady(false);
+  };
+
+  const startCamera = () => {
+    setCameraOpen(true);
+    setCameraStarting(true);
+    setCameraReady(false);
+    setCameraError('');
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError('Live camera access requires HTTPS (or localhost) and a supported browser. Use the device camera or choose a photo instead.');
+      setCameraStarting(false);
+      return;
+    }
+
+    const requestId = ++cameraRequestIdRef.current;
+    void navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' } },
+    }).then((stream) => {
+      if (requestId !== cameraRequestIdRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      cameraStreamRef.current = stream;
+      setCameraStream(stream);
+    }).catch((cameraStartError: unknown) => {
+      if (requestId !== cameraRequestIdRef.current) return;
+      const errorName = getCameraErrorName(cameraStartError);
+      if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
+        setCameraError("Camera access is blocked by the browser. Confirm this page is open over HTTPS (or localhost), check this site's camera permission and any in-app browser restrictions, then reload. Or use the device camera or choose a photo instead.");
+      } else if (errorName === 'NotFoundError') {
+        setCameraError('No camera was found on this device. You can choose an existing photo instead.');
+      } else if (errorName === 'NotReadableError') {
+        setCameraError('The camera is unavailable or being used by another app. Close other camera apps and try again, or choose a photo.');
+      } else {
+        setCameraError('The camera could not be started. Check browser permissions and try again, or use the device camera or choose a photo instead.');
+      }
+    }).finally(() => {
+      if (requestId === cameraRequestIdRef.current) setCameraStarting(false);
+    });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -162,56 +220,20 @@ export default function EcoScorer() {
   }, [previewUrl]);
 
   useEffect(() => {
-    if (!cameraOpen) return;
+    if (!cameraOpen || !cameraStream || !videoRef.current) return;
+    const video = videoRef.current;
+    video.srcObject = cameraStream;
+    void video.play().then(() => {
+      setCameraReady(true);
+    }).catch(() => {
+      setCameraError('The camera preview could not be played. Try again or use the device camera or choose a photo instead.');
+    });
+  }, [cameraOpen, cameraStream]);
 
-    let cancelled = false;
-    const startCamera = async () => {
-      setCameraStarting(true);
-      setCameraError('');
-      if (!navigator.mediaDevices?.getUserMedia) {
-        setCameraError('Live camera access requires HTTPS (or localhost) and a supported browser. Use the device camera or choose a photo instead.');
-        setCameraStarting(false);
-        return;
-      }
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: { facingMode: { ideal: 'environment' } },
-        });
-        if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-        cameraStreamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-          setCameraReady(true);
-        }
-      } catch (cameraStartError) {
-        if (cancelled) return;
-        if (cameraStartError instanceof DOMException && cameraStartError.name === 'NotAllowedError') {
-          setCameraError('Camera access was denied. Allow camera access in your browser or device settings, or use the device camera or choose a photo instead.');
-        } else if (cameraStartError instanceof DOMException && cameraStartError.name === 'NotFoundError') {
-          setCameraError('No camera was found on this device. You can choose an existing photo instead.');
-        } else if (cameraStartError instanceof DOMException && cameraStartError.name === 'NotReadableError') {
-          setCameraError('The camera is unavailable or being used by another app. Close other camera apps and try again, or choose a photo.');
-        } else {
-          setCameraError('The camera could not be started. Check browser permissions and try again, or use the device camera or choose a photo instead.');
-        }
-      } finally {
-        if (!cancelled) setCameraStarting(false);
-      }
-    };
-
-    void startCamera();
-    return () => {
-      cancelled = true;
-      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
-      cameraStreamRef.current = null;
-    };
-  }, [cameraOpen]);
+  useEffect(() => () => {
+    cameraRequestIdRef.current += 1;
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+  }, []);
 
   const chooseFile = useCallback((selected: File | undefined) => {
     setError('');
@@ -269,7 +291,7 @@ export default function EcoScorer() {
       type: 'image/jpeg',
       lastModified: capturedAt,
     }));
-    setCameraOpen(false);
+    closeCamera();
   };
 
   const reset = () => {
@@ -494,7 +516,7 @@ export default function EcoScorer() {
               onChange={(event) => {
                 const selected = event.target.files?.[0];
                 chooseFile(selected);
-                if (selected) setCameraOpen(false);
+                if (selected) closeCamera();
                 event.target.value = '';
               }}
             />
@@ -515,10 +537,7 @@ export default function EcoScorer() {
             <button
               className={styles.secondaryButton}
               type="button"
-              onClick={() => {
-                setCameraReady(false);
-                setCameraOpen(true);
-              }}
+              onClick={startCamera}
             >
               <Eye size={16} /> Open live camera
             </button>
@@ -560,7 +579,7 @@ export default function EcoScorer() {
               <button
                 className={styles.resetBtn}
                 type="button"
-                onClick={() => setCameraOpen(false)}
+                onClick={closeCamera}
                 aria-label="Close camera"
               >
                 <X size={16} />
