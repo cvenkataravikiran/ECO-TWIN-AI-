@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 from fastapi import FastAPI
 from app.api.eco_scorer import (
     ObservationUpdate,
+    get_evidence_profile,
+    list_assessments,
     save_to_planner,
     update_observation,
 )
@@ -95,7 +97,7 @@ def test_detector_nms_suppresses_duplicates_only_within_same_class():
     assert _nms(boxes, scores, class_ids=np.array([1, 1])) == [0]
 
 
-def test_assessment_never_scores_environmental_impact_from_detected_objects():
+def test_assessment_counts_guidance_areas_without_scoring_environmental_impact():
     rules = load_rules(Path(__file__).resolve().parents[2])
     result = score_observations(
         [
@@ -105,18 +107,17 @@ def test_assessment_never_scores_environmental_impact_from_detected_objects():
         ],
         rules,
     )
-    assert result["score"] == 25
-    assert result["max_score"] == 100
+    assert result["score"] is None
+    assert result["max_score"] is None
+    assert result["guidance_area_count"] == 1
     assert result["is_reliable"] is False
     assert result["review_coverage"] == 0.67
     assert result["confirmed_observation_count"] == 1
-    assert result["contributions"] == [
-        {"category": "Transport", "confidence_weight": 1.0, "points": 25}
-    ]
-    assert "not a rating of environmental performance" in result["formula"]
+    assert result["contributions"] == [{"category": "Transport"}]
+    assert "not an environmental score" in result["formula"]
 
 
-def test_action_opportunity_score_weights_unconfirmed_detections_and_caps_at_100():
+def test_guidance_area_count_deduplicates_categories_and_ignores_dismissed_detections():
     rules = load_rules(Path(__file__).resolve().parents[2])
     result = score_observations(
         [
@@ -129,23 +130,26 @@ def test_action_opportunity_score_weights_unconfirmed_detections_and_caps_at_100
         rules,
     )
 
-    assert result["score"] == 43
-    assert result["max_score"] == 100
+    assert result["score"] is None
+    assert result["max_score"] is None
+    assert result["guidance_area_count"] == 2
     assert len(result["contributions"]) == 2
     assert "regular Hyderabad trip" in result["local_action"]
 
 
-def test_empty_image_returns_zero_opportunity_score_not_an_eco_rating():
+def test_empty_image_returns_no_guidance_areas_and_no_eco_score():
     rules = load_rules(Path(__file__).resolve().parents[2])
     result = score_observations([], rules)
 
-    assert result["score"] == 0
+    assert result["score"] is None
+    assert result["max_score"] is None
+    assert result["guidance_area_count"] == 0
     assert result["assessment_status"] == "no_action_opportunities_detected"
     assert result["local_action"] == ""
     assert result["review_coverage"] == 0
 
 
-def test_action_opportunity_score_is_capped_at_100_for_many_categories():
+def test_guidance_area_count_reports_all_distinct_mapped_categories():
     rules = load_rules(Path(__file__).resolve().parents[2])
     categories = [
         "Transport",
@@ -162,8 +166,88 @@ def test_action_opportunity_score_is_capped_at_100_for_many_categories():
         rules,
     )
 
-    assert result["score"] == 100
-    assert result["max_score"] == 100
+    assert result["score"] is None
+    assert result["max_score"] is None
+    assert result["guidance_area_count"] == len(categories)
+
+
+def test_assessment_history_does_not_expose_legacy_action_points_as_eco_scores(db_session):
+    db_session.add(Workspace(id="ws-history", name="History Test", type="individual"))
+    db_session.add(EcoAssessment(
+        id="eco-history",
+        workspace_id="ws-history",
+        image_filename="uploaded image",
+        model_id="yolox-tiny",
+        model_version="0.1.1",
+        processing_time_ms=1,
+        score_value=100,
+        score_max=100,
+        evidence_coverage=0,
+        is_reliable=False,
+        image_retained=False,
+    ))
+    db_session.commit()
+
+    result = list_assessments("ws-history", db_session)
+
+    assert result["items"][0]["score_value"] is None
+    assert result["items"][0]["score_max"] is None
+
+
+def test_evidence_profile_uses_latest_workspace_resource_records_without_estimating_impact(db_session):
+    db_session.add(Workspace(id="ws-evidence", name="Evidence Test", type="individual"))
+    db_session.add_all([
+        ResourceRecord(
+            id="res-electricity-old",
+            workspace_id="ws-evidence",
+            category="electricity",
+            description="Previous bill",
+            quantity=180,
+            unit="kWh",
+            cost=0,
+            currency="INR",
+            period_start="2025-01-01",
+            period_end="2025-01-31",
+            measurement_type="measured",
+        ),
+        ResourceRecord(
+            id="res-electricity-latest",
+            workspace_id="ws-evidence",
+            category="electricity",
+            description="Latest bill",
+            quantity=210,
+            unit="kWh",
+            cost=0,
+            currency="INR",
+            period_start="2025-02-01",
+            period_end="2025-02-28",
+            measurement_type="measured",
+            source="Utility bill",
+        ),
+        ResourceRecord(
+            id="res-water-latest",
+            workspace_id="ws-evidence",
+            category="water",
+            description="Water reading estimate",
+            quantity=3,
+            unit="m³",
+            cost=0,
+            currency="INR",
+            period_start="2025-02-01",
+            period_end="2025-02-28",
+            measurement_type="estimated",
+        ),
+    ])
+    db_session.commit()
+
+    profile = get_evidence_profile("ws-evidence", db_session)
+    records_by_category = {record["category"]: record for record in profile["resource_records"]}
+
+    assert records_by_category["electricity"]["quantity"] == 210
+    assert records_by_category["electricity"]["source"] == "Utility bill"
+    assert records_by_category["water"]["measurement_type"] == "estimated"
+    assert profile["emissions"]["status"] == "not_calculated"
+    assert profile["recyclability"]["status"] == "not_assessed"
 
 
 @pytest.fixture
@@ -218,7 +302,8 @@ def test_analysis_api_validates_image_and_returns_real_empty_result(scorer_clien
     payload = response.json()
     assert payload["is_demo"] is False
     assert payload["detections"] == []
-    assert payload["eco_score"]["score"] == 0
+    assert payload["eco_score"]["score"] is None
+    assert payload["eco_score"]["guidance_area_count"] == 0
     assert "not stored" in payload["privacy_notice"]
 
     invalid = scorer_client(
@@ -285,7 +370,8 @@ def test_analysis_returns_preliminary_knowledge_guidance_for_detected_objects(
     assert response.status_code == 200
     payload = response.json()
     assert payload["detections"][0]["status"] == "detected"
-    assert payload["eco_score"]["score"] == 23
+    assert payload["eco_score"]["score"] is None
+    assert payload["eco_score"]["guidance_area_count"] == 1
     assert payload["recommendations"][0]["article_id"] == "kb-007"
     assert payload["recommendations"][0]["requires_confirmation"] is True
     assert payload["recommendations"][0]["implementation_steps"] == ["Confirm local rules"]
@@ -449,7 +535,8 @@ def test_confirmed_detection_retrieves_private_kb_and_saves_planner_action(db_se
         ObservationUpdate(status="confirmed"),
         db_session,
     )
-    assert updated["eco_score"]["score"] == 25
+    assert updated["eco_score"]["score"] is None
+    assert updated["eco_score"]["guidance_area_count"] == 1
     assert updated["recommendations"][0]["article_id"] == "kb-007"
     assert updated["recommendations"][0]["requires_confirmation"] is False
     assert updated["recommendations"][0]["implementation_steps"] == ["Confirm local rules"]

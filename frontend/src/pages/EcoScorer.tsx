@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
   Camera,
@@ -18,6 +19,7 @@ import { useWorkspace } from '@/hooks/useWorkspace';
 import {
   analyseEcoScorerImage,
   createAction,
+  getEcoEvidenceProfile,
   getEcoScorerStatus,
   saveEcoScorerActions,
   updateEcoScorerObservation,
@@ -25,12 +27,23 @@ import {
   type EcoScorerDetection,
   type EcoScorerRecommendation,
   type EcoScorerStatus,
+  type EcoEvidenceProfile,
 } from '@/services/api';
 import type { KnowledgeCategory } from '@/types';
 import styles from './EcoScorer.module.css';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const RESOURCE_CATEGORY_LABELS: Record<string, string> = {
+  electricity: 'Electricity',
+  water: 'Water',
+  gas: 'Gas',
+  travel: 'Travel',
+  food: 'Food',
+  waste: 'Waste',
+  shopping: 'Shopping',
+  other: 'Other',
+};
 
 const CIRCULAR_PATHWAYS = [
   {
@@ -106,6 +119,93 @@ function ErrorMessage({ children }: { children: string }) {
       <AlertTriangle size={17} />
       <span>{children}</span>
     </div>
+  );
+}
+
+function EnvironmentalEvidenceProfile({ workspaceId }: { workspaceId: string }) {
+  const [profile, setProfile] = useState<EcoEvidenceProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    const loadProfile = async () => {
+      try {
+        const result = await getEcoEvidenceProfile(workspaceId);
+        if (active) setProfile(result);
+      } catch (profileError: unknown) {
+        if (!active) return;
+        console.error('Unable to load Eco-Scorer evidence profile', profileError);
+        setLoadError(
+          profileError instanceof Error ? profileError.message : 'Could not load workspace evidence.',
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void loadProfile();
+    return () => {
+      active = false;
+    };
+  }, [workspaceId, retry]);
+
+  const retryLoading = () => {
+    setProfile(null);
+    setLoadError('');
+    setLoading(true);
+    setRetry((current) => current + 1);
+  };
+
+  return (
+    <>
+      {loading && <div className={styles.cameraMessage} role="status">Loading workspace evidence…</div>}
+      {loadError && (
+        <div className={styles.evidenceProfileError}>
+          <ErrorMessage>{loadError}</ErrorMessage>
+          <button className={styles.secondaryButton} type="button" onClick={retryLoading}>
+            <RotateCcw size={14} /> Retry
+          </button>
+        </div>
+      )}
+      {profile && (
+        <div className={styles.evidenceProfileGrid}>
+          <article className={styles.evidenceProfileCard}>
+            <h3>Latest workspace resource records</h3>
+            <p className={styles.panelNote}>
+              One latest saved record per category; values are not added across different periods or units.
+            </p>
+            {profile.resource_records.length > 0 ? (
+              <ul className={styles.evidenceRecordList}>
+                {profile.resource_records.map((record) => (
+                  <li key={record.category}>
+                    <strong>{RESOURCE_CATEGORY_LABELS[record.category] ?? record.category}</strong>
+                    <span>{record.quantity.toLocaleString()} {record.unit}</span>
+                    <small>
+                      {record.description} · {record.period_start} – {record.period_end} · {record.measurement_type}
+                      {record.source ? ` · ${record.source}` : ''}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className={styles.panelNote}>No resource records are saved for this workspace yet.</p>
+            )}
+            <Link className={styles.evidenceProfileLink} to="/resources">Review or add resource records</Link>
+          </article>
+          <article className={styles.evidenceProfileCard}>
+            <h3>Emissions</h3>
+            <span className={styles.evidenceUnavailable}>Not calculated</span>
+            <p className={styles.panelNote}>{profile.emissions.reason}</p>
+          </article>
+          <article className={styles.evidenceProfileCard}>
+            <h3>Material and recyclability</h3>
+            <span className={styles.evidenceUnavailable}>Not assessed</span>
+            <p className={styles.panelNote}>{profile.recyclability.reason}</p>
+          </article>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -478,8 +578,8 @@ export default function EcoScorer() {
           Local computer vision identifies supported COCO object classes only.
           Review and confirm detections before saving related actions.
           A photo does not establish environmental performance, lifecycle emissions, material composition,
-          local recyclability, or actual electricity use. The displayed score measures mapped action
-          opportunities, not environmental performance.
+          local recyclability, or actual electricity use. The photo guidance summary lists mapped
+          practical topics; it is not an environmental performance score.
         </p>
       </div>
 
@@ -538,6 +638,7 @@ export default function EcoScorer() {
               className={styles.secondaryButton}
               type="button"
               onClick={startCamera}
+              hidden
             >
               <Eye size={16} /> Open live camera
             </button>
@@ -563,8 +664,8 @@ export default function EcoScorer() {
             <div className={styles.infoCard}>
               <AlertTriangle size={18} style={{ color: 'var(--color-warning)' }} />
               <div>
-                <div className={styles.infoCardTitle}>No appearance-based impact score</div>
-                <div className={styles.infoCardText}>A detected object is not evidence of environmental benefit or harm. The app withholds a numerical score until suitable measured or user-supplied evidence exists.</div>
+                <div className={styles.infoCardTitle}>No environmental impact score</div>
+                <div className={styles.infoCardText}>The photo result counts mapped guidance topics only. An environmental impact score needs measured resource use or verified environmental data; a detected object alone cannot show environmental benefit or harm.</div>
               </div>
             </div>
           </div>
@@ -722,14 +823,17 @@ export default function EcoScorer() {
             <section className={styles.panelSection}>
               <div className={styles.panelTitle}>{analysis.eco_score.label}</div>
               <div className={styles.actionScore}>
-                <div className={styles.actionScoreValue} aria-label={`${analysis.eco_score.score ?? 0} out of 100 action opportunity score`}>
-                  {analysis.eco_score.score ?? '—'}
-                  <span> / {analysis.eco_score.max_score ?? 100}</span>
+                <div
+                  className={styles.actionScoreValue}
+                  aria-label={`${analysis.eco_score.guidance_area_count} mapped guidance ${analysis.eco_score.guidance_area_count === 1 ? 'area' : 'areas'} identified`}
+                >
+                  {analysis.eco_score.guidance_area_count}
+                  <span> {analysis.eco_score.guidance_area_count === 1 ? 'guidance area' : 'guidance areas'}</span>
                 </div>
                 <p>
-                  {analysis.eco_score.contributions.length > 0
-                    ? `${analysis.eco_score.contributions.length} mapped action ${analysis.eco_score.contributions.length === 1 ? 'area' : 'areas'} found in this photo.`
-                    : 'No mapped action areas were recognized. Try a clearer photo or a different scene.'}
+                  {analysis.eco_score.guidance_area_count > 0
+                    ? 'Distinct categories with practical guidance were recognized in this photo.'
+                    : 'No mapped guidance areas were recognized. Try a clearer photo or a supported object.'}
                 </p>
               </div>
               {analysis.eco_score.local_action && (
@@ -739,8 +843,8 @@ export default function EcoScorer() {
                 </div>
               )}
               <p className={styles.panelNote}>
-                This is an action-opportunity score—not a rating of how green this place or its occupants are.
-                A higher score means more mapped guidance areas were visible, not lower emissions or environmental impact.
+                This is a count of mapped guidance topics, not an Eco Score or rating of the scene.
+                More topics do not mean better or worse environmental performance. A photo cannot measure emissions, resource use, or actual impact.
               </p>
               {analysis.eco_score.contributions.length > 0 && (
                 <p className={styles.panelNote}>
@@ -768,6 +872,15 @@ export default function EcoScorer() {
                   <p>Model confidence is a detector score and may not be a calibrated probability. Corrections are user-provided and are not model-verified.</p>
                 </div>
               )}
+            </section>
+
+            <section className={styles.panelSection}>
+              <div className={styles.panelTitle}><Leaf size={17} /> Environmental evidence profile</div>
+              <p className={styles.panelNote}>
+                This profile keeps separate evidence indicators instead of inventing one overall Eco Score.
+                Photo detections are not measurements; resource values below come from records you saved in this workspace.
+              </p>
+              <EnvironmentalEvidenceProfile key={`${analysis.assessment_id}-${currentWorkspace.id}`} workspaceId={currentWorkspace.id} />
             </section>
 
             <section className={styles.panelSection}>

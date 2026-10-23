@@ -20,7 +20,7 @@ The model is stored at `computer_vision/models/yolox_tiny.onnx` and is excluded 
 
 Image validation is in `image_validation.py`, ONNX inference and post-processing are in `detection/onnx_detector.py`, and action-opportunity scoring helpers are in `scoring/eco_score.py`. Object-to-guidance and knowledge-base article mappings live in `knowledge_base/eco_scoring_rules/coco_sustainability_map.json`.
 
-The returned Telangana Green Action Score measures the mapped guidance opportunities a photo surfaces, not its environmental performance or impact. See the documented formula and limitations in [the method](../docs/COMPUTER_VISION_METHOD.md).
+The returned photo guidance summary counts distinct mapped guidance areas. It is not an Eco Score and does not measure environmental performance or impact. See the documented formula and limitations in [the method](../docs/COMPUTER_VISION_METHOD.md).
 
 See [the documented method](../docs/COMPUTER_VISION_METHOD.md) for input limits, privacy handling, scoring/assessment formula, confidence interpretation, mapping scope, and limitations.
 

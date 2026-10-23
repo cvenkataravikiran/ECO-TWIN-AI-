@@ -138,12 +138,13 @@ export interface EcoScorerRecommendation {
 export interface EcoScorerAssessment {
   score: number | null;
   max_score: number | null;
+  guidance_area_count: number;
   is_reliable: boolean;
   assessment_status: string;
   label: string;
   confirmed_observation_count: number;
   review_coverage: number;
-  contributions: Array<{ category: string; confidence_weight?: number; points?: number }>;
+  contributions: Array<{ category: string }>;
   local_action: string;
   formula: string;
   limitations: string[];
@@ -159,8 +160,36 @@ export interface EcoScorerAnalysis {
   privacy_notice: string;
 }
 
+export interface EcoEvidenceProfile {
+  resource_records: Array<{
+    category: string;
+    description: string;
+    quantity: number;
+    unit: string;
+    period_start: string;
+    period_end: string;
+    measurement_type: 'measured' | 'estimated' | 'imported';
+    source: string;
+  }>;
+  emissions: {
+    status: 'not_calculated';
+    reason: string;
+  };
+  recyclability: {
+    status: 'not_assessed';
+    reason: string;
+  };
+}
+
 export async function getEcoScorerStatus(): Promise<EcoScorerStatus> {
   return handleResponse<EcoScorerStatus>(await apiFetch(`${BASE_URL}/eco-scorer/status`));
+}
+
+export async function getEcoEvidenceProfile(workspaceId: string): Promise<EcoEvidenceProfile> {
+  const query = new URLSearchParams({ workspace_id: workspaceId });
+  return handleResponse<EcoEvidenceProfile>(
+    await apiFetch(`${BASE_URL}/eco-scorer/evidence-profile?${query.toString()}`),
+  );
 }
 
 export async function analyseEcoScorerImage(

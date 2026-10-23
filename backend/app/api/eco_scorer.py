@@ -24,6 +24,7 @@ from app.db.database import get_db
 from app.models.action_plan import Action
 from app.models.eco_assessment import EcoAssessment, VisualObservation
 from app.models.knowledge_article import KnowledgeArticle
+from app.models.resource_record import ResourceRecord
 from app.models.workspace import Workspace
 
 _ROOT = Path(__file__).resolve().parents[3]
@@ -179,6 +180,57 @@ def _obs_dict(obs: VisualObservation, guidance: str = "") -> dict:
     }
 
 
+@router.get("/evidence-profile")
+def get_evidence_profile(
+    workspace_id: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    require_live_workspace(db, workspace_id)
+    records = (
+        db.query(ResourceRecord)
+        .filter(
+            ResourceRecord.workspace_id == workspace_id,
+            ResourceRecord.currency == "INR",
+        )
+        .order_by(ResourceRecord.period_end.desc(), ResourceRecord.created_at.desc())
+        .all()
+    )
+    latest_by_category: dict[str, ResourceRecord] = {}
+    for record in records:
+        latest_by_category.setdefault(record.category, record)
+
+    resource_records = [
+        {
+            "category": record.category,
+            "description": record.description,
+            "quantity": record.quantity,
+            "unit": record.unit,
+            "period_start": record.period_start,
+            "period_end": record.period_end,
+            "measurement_type": record.measurement_type or "measured",
+            "source": record.source or "",
+        }
+        for record in latest_by_category.values()
+    ]
+    return {
+        "resource_records": resource_records,
+        "emissions": {
+            "status": "not_calculated",
+            "reason": (
+                "No verified, applicable emissions factors are configured for this workspace. "
+                "The photo cannot supply electricity, fuel, or travel activity data."
+            ),
+        },
+        "recyclability": {
+            "status": "not_assessed",
+            "reason": (
+                "The photo detector cannot confirm material composition or current local collection "
+                "rules. Confirmed object labels alone are not enough to determine recyclability."
+            ),
+        },
+    }
+
+
 def _runtime_status(db: Session) -> dict:
     model_path = Path(settings.cv_model_path)
     dependencies = {}
@@ -319,8 +371,8 @@ async def analyse_image(
         model_id="yolox-tiny",
         model_version="0.1.1",
         processing_time_ms=processing_time_ms,
-        score_value=0,
-        score_max=100,
+        score_value=None,
+        score_max=None,
         evidence_coverage=0.0,
         is_reliable=False,
         image_retained=False,
@@ -543,8 +595,8 @@ def list_assessments(
                 "id": a.id,
                 "image_filename": a.image_filename,
                 "model_id": a.model_id,
-                "score_value": a.score_value,
-                "score_max": a.score_max,
+                "score_value": None,
+                "score_max": None,
                 "review_coverage": a.evidence_coverage,
                 "is_reliable": a.is_reliable,
                 "created_at": a.created_at.isoformat() if a.created_at else "",
